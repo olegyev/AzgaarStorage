@@ -16,6 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import javax.servlet.http.HttpServletRequest;
+
 import java.io.IOException;
 
 @RestController
@@ -46,10 +47,8 @@ public class FileController {
     @CrossOrigin
     @GetMapping("/downloadFile/{fileName:.+}")
     public ResponseEntity<Resource> downloadFile(@PathVariable String fileName, HttpServletRequest request) {
-        // Load file as a Resource
         Resource resource = fileStorageService.loadFileAsResource(fileName);
 
-        // Try to determine file's content type
         String contentType = null;
         try {
             contentType = request.getServletContext().getMimeType(resource.getFile().getAbsolutePath());
@@ -57,7 +56,6 @@ public class FileController {
             logger.info("Could not determine file type.");
         }
 
-        // Fallback to the default content type if type could not be determined
         if (contentType == null) {
             contentType = "application/octet-stream";
         }
