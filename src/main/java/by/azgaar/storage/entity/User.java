@@ -1,39 +1,34 @@
 package by.azgaar.storage.entity;
 
-import by.azgaar.storage.entity.enums.Roles;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
+import lombok.*;
 
-import javax.persistence.Entity;
 import javax.persistence.*;
 
-import java.util.Calendar;
+import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
 @Table(name = "users")
 @Data
-@EqualsAndHashCode(callSuper = false)
-public class User extends by.azgaar.storage.entity.Entity {
+public class User implements Serializable, Cloneable {
 
-    @Column(unique = true, nullable = false)
-    private String username;
+    @Id
+    @Column(nullable = false)
+    @JsonIgnore
+    private String id;
 
-    @Column(unique = true, nullable = false)
+    @Column(nullable = false)
+    private String name;
+
     private String email;
 
-    @Column(nullable = false)
-    private String password;
+    private String location;
 
     @Column(nullable = false)
-    @Enumerated(EnumType.STRING)
-    private Roles role;
-
-    @Column(nullable = false)
-    @Temporal(TemporalType.TIMESTAMP)
-    private Calendar created;
+    private LocalDateTime lastVisit;
 
     @EqualsAndHashCode.Exclude
     @ToString.Exclude

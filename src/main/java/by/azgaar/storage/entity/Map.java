@@ -1,18 +1,26 @@
 package by.azgaar.storage.entity;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import javax.persistence.Entity;
+import lombok.AccessLevel;
+import lombok.Data;
+import lombok.Setter;
+
 import javax.persistence.*;
 
+import java.io.Serializable;
 import java.util.Calendar;
 
 @Entity
 @Table(name = "maps")
 @Data
-@EqualsAndHashCode(callSuper = false)
-public class Map extends by.azgaar.storage.entity.Entity {
+public class Map implements Serializable, Cloneable {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Setter(AccessLevel.NONE)
+    @JsonIgnore
+    private long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false)
