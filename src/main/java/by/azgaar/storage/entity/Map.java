@@ -4,17 +4,18 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import lombok.AccessLevel;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.Setter;
 
 import javax.persistence.*;
 
-import java.io.Serializable;
 import java.util.Calendar;
 
 @Entity
 @Table(name = "maps")
 @Data
-public class Map implements Serializable, Cloneable {
+@EqualsAndHashCode(callSuper = false)
+public class Map extends AzgaarStorageEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

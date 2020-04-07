@@ -2,18 +2,20 @@ package by.azgaar.storage.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import lombok.*;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 import javax.persistence.*;
 
-import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
 @Table(name = "users")
 @Data
-public class User implements Serializable, Cloneable {
+@EqualsAndHashCode(callSuper = false)
+public class User extends AzgaarStorageEntity {
 
     @Id
     @Column(nullable = false)

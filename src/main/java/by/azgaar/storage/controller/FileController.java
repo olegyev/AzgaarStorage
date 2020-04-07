@@ -1,7 +1,7 @@
 package by.azgaar.storage.controller;
 
-import by.azgaar.storage.payload.UploadFileResponse;
-import by.azgaar.storage.service.FileStorageService;
+import by.azgaar.storage.dto.UploadDto;
+import by.azgaar.storage.service.impl.FileStorageServiceImpl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,28 +24,28 @@ public class FileController {
 
     private static final Logger logger = LoggerFactory.getLogger(FileController.class);
 
-    private final FileStorageService fileStorageService;
+    private final FileStorageServiceImpl fileStorageService;
 
     @Autowired
-    public FileController(final FileStorageService fileStorageService) {
+    public FileController(final FileStorageServiceImpl fileStorageService) {
         this.fileStorageService = fileStorageService;
     }
 
+    @PostMapping("upload")
     @CrossOrigin
-    @PostMapping("/uploadFile")
-    public UploadFileResponse uploadFile(@RequestParam("file") MultipartFile file) {
+    public UploadDto uploadFile(@RequestParam("file") MultipartFile file) {
         String fileName = fileStorageService.storeFile(file);
 
         String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath()
-                .path("/downloadFile/")
+                .path("/download/")
                 .path(fileName)
                 .toUriString();
 
-        return new UploadFileResponse(fileName, fileDownloadUri, file.getContentType(), file.getSize());
+        return new UploadDto(fileName, fileDownloadUri, file.getContentType(), file.getSize());
     }
 
-    @CrossOrigin
-    @GetMapping("/downloadFile/{fileName:.+}")
+    @GetMapping("download/{fileName:.+}")
+    @CrossOrigin(origins = "null", allowCredentials = "true")
     public ResponseEntity<Resource> downloadFile(@PathVariable String fileName, HttpServletRequest request) {
         Resource resource = fileStorageService.loadFileAsResource(fileName);
 
