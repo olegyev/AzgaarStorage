@@ -1,5 +1,7 @@
 package by.azgaar.storage.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -10,11 +12,17 @@ import java.util.Calendar;
 @EqualsAndHashCode(callSuper = false)
 public class MapDto extends AbstractDto {
 
+    private String owner;
+
     private String filename;
-    private String description;
-    private Calendar created;
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private Calendar updated;
-    private Calendar deleted;
+
+    private String version;
+
+    private String picture;
+
     private URI downloadLink;
 
 }

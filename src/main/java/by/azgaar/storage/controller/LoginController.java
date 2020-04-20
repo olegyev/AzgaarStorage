@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
+@CrossOrigin(origins = "null")
 public class LoginController {
 
     private final LoginServiceInterface loginService;
@@ -19,7 +20,6 @@ public class LoginController {
     }
 
     @GetMapping("login")
-    @CrossOrigin(origins = "null")
     public LoginDto login() {
         return loginService.compoundLinks();
     }

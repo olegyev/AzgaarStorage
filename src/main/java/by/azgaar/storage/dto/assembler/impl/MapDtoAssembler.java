@@ -25,19 +25,19 @@ public class MapDtoAssembler
 
     @Override
     public MapDto toModel(Map map) {
-        MapDto dto = createModelWithId(map.getId(), map); // instantiateModel(map);
+        MapDto dto = createModelWithId(map.getId(), map);
 
+        dto.setOwner(map.getOwner().getName());
         dto.setFilename(map.getFilename());
-        dto.setDescription(map.getDescription());
-        dto.setCreated(map.getCreated());
         dto.setUpdated(map.getUpdated());
-        dto.setDeleted(map.getDeleted());
+        dto.setVersion(map.getVersion());
+        dto.setPicture(map.getPicture());
 
         URI downloadPath = ServletUriComponentsBuilder.fromCurrentContextPath().path("/download/" + map.getFilename()).build().toUri();
         dto.setDownloadLink(downloadPath);
 
         dto.add(linkTo(methodOn(MapController.class)
-                .getAll(null))
+                .getAll(null, null))
                 .withRel("maps"));
 
         return dto;

@@ -7,8 +7,8 @@ import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
 import javax.persistence.*;
-
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -30,11 +30,14 @@ public class User extends AzgaarStorageEntity {
     private String location;
 
     @Column(nullable = false)
+    private LocalDateTime firstVisit;
+
+    @Column(nullable = false)
     private LocalDateTime lastVisit;
 
     @EqualsAndHashCode.Exclude
     @ToString.Exclude
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Map> maps;
+    @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Map> maps = new ArrayList<>(0);
 
 }

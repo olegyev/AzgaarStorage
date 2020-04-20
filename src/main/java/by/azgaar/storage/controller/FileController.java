@@ -20,6 +20,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 
 @RestController
+@CrossOrigin(origins = "null", allowCredentials = "true")
 public class FileController {
 
     private static final Logger logger = LoggerFactory.getLogger(FileController.class);
@@ -32,7 +33,6 @@ public class FileController {
     }
 
     @PostMapping("upload")
-    @CrossOrigin
     public UploadDto uploadFile(@RequestParam("file") MultipartFile file) {
         String fileName = fileStorageService.storeFile(file);
 
@@ -45,7 +45,6 @@ public class FileController {
     }
 
     @GetMapping("download/{fileName:.+}")
-    @CrossOrigin(origins = "null", allowCredentials = "true")
     public ResponseEntity<Resource> downloadFile(@PathVariable String fileName, HttpServletRequest request) {
         Resource resource = fileStorageService.loadFileAsResource(fileName);
 

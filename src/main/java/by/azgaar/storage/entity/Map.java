@@ -25,21 +25,19 @@ public class Map extends AzgaarStorageEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false)
-    private User user;
+    private User owner;
 
     @Column(nullable = false)
     private String filename;
 
-    private String description;
-
     @Column(nullable = false)
-    @Temporal(TemporalType.TIMESTAMP)
-    private Calendar created;
-
     @Temporal(TemporalType.TIMESTAMP)
     private Calendar updated;
 
-    @Temporal(TemporalType.TIMESTAMP)
-    private Calendar deleted;
+    @Column(nullable = false)
+    private String version;
+
+    @Column(nullable = false)
+    private String picture;
 
 }

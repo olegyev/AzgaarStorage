@@ -19,8 +19,7 @@
 
     <properties>
         <java.version>1.8</java.version>
-        <jquery.version>3.4.1</jquery.version>
-        <bootstrap.version>4.3.1</bootstrap.version>
+        <swagger.version>2.9.2</swagger.version>
     </properties>
 
     <build>
@@ -104,6 +103,19 @@
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-test</artifactId>
             <scope>test</scope>
+        </dependency>
+
+        <!-- Swagger -->
+        <dependency>
+            <groupId>io.springfox</groupId>
+            <artifactId>springfox-swagger2</artifactId>
+            <version>${swagger.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.springfox</groupId>
+            <artifactId>springfox-swagger-ui</artifactId>
+            <version>${swagger.version}</version>
         </dependency>
 
     </dependencies>
