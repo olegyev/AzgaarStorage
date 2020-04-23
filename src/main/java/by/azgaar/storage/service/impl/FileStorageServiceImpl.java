@@ -1,9 +1,13 @@
 package by.azgaar.storage.service.impl;
 
+import by.azgaar.storage.entity.Map;
+import by.azgaar.storage.entity.User;
+import by.azgaar.storage.exception.BadRequestException;
 import by.azgaar.storage.exception.FileStorageException;
-import by.azgaar.storage.exception.MyFileNotFoundException;
+import by.azgaar.storage.exception.NotFoundException;
 import by.azgaar.storage.property.FileStorageProperties;
 import by.azgaar.storage.service.FileStorageServiceInterface;
+import by.azgaar.storage.service.MapServiceInterface;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
@@ -23,56 +27,96 @@ import java.nio.file.StandardCopyOption;
 public class FileStorageServiceImpl implements FileStorageServiceInterface {
 
     private final Path fileStorageLocation;
+    private final MapServiceInterface mapService;
 
     @Autowired
-    public FileStorageServiceImpl(FileStorageProperties fileStorageProperties) {
-        this.fileStorageLocation = Paths.get(fileStorageProperties.getUploadDir()).toAbsolutePath().normalize();
+    public FileStorageServiceImpl(final FileStorageProperties fileStorageProperties,
+                                  final MapServiceInterface mapService) {
+        fileStorageLocation = Paths.get(fileStorageProperties.getUploadDir()).toAbsolutePath().normalize();
 
         try {
-            Files.createDirectories(this.fileStorageLocation);
-        } catch (Exception ex) {
-            throw new FileStorageException("Could not create the directory where the uploaded files will be stored.", ex);
+            Files.createDirectories(fileStorageLocation);
+        } catch (Exception e) {
+            throw new FileStorageException("Cannot create directory where the uploaded files will be stored.");
         }
+
+        this.mapService = mapService;
     }
 
     @Override
-    public String storeFile(MultipartFile file) {
-        String fileName = StringUtils.cleanPath(file.getOriginalFilename());
-
-        // saveFileInfo();
+    public String storeFile(User owner, MultipartFile file, Map map) {
+        String filename = StringUtils.cleanPath(file.getOriginalFilename());
 
         try {
-            if (fileName.contains("..")) {
-                throw new FileStorageException("Sorry! Filename contains invalid path sequence " + fileName);
+            if (filename.contains("..")) {
+                throw new FileStorageException("Filename contains invalid path sequence " + filename);
+            } else if (!mapIsOk(map)) {
+                throw new BadRequestException("Map data does not contain all required fields.");
             }
 
-            Path targetLocation = fileStorageLocation.resolve(fileName);
-            Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
-            return fileName;
+            saveMapData(owner, map);
 
-        } catch (IOException ex) {
-            throw new FileStorageException("Could not store file " + fileName + ". Please try again!", ex);
+            Path userFolderPath;
+            if (Files.notExists(Paths.get(fileStorageLocation + "/" + owner.getId()))) {
+                try {
+                    userFolderPath = Paths.get(fileStorageLocation + "/" + owner.getId());
+                    Files.createDirectories(userFolderPath);
+                } catch (Exception e) {
+                    throw new FileStorageException("Cannot create directory for user " + owner.getName());
+                }
+            } else {
+                userFolderPath = Paths.get(fileStorageLocation + "/" + owner.getId());
+            }
+
+            Path targetLocation = userFolderPath.resolve(filename);
+            Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
+            return filename;
+
+        } catch (IOException e) {
+            throw new FileStorageException("Cannot store file " + filename + ". Please try again!");
         }
     }
 
     @Override
-    public Resource loadFileAsResource(String fileName) {
+    public Resource loadFileAsResource(User owner, String fileName) {
         try {
-            Path filePath = fileStorageLocation.resolve(fileName).normalize();
+            Map mapToDownload = mapService.getOneByOwnerAndFilename(owner, fileName);
+
+            if (mapToDownload == null) {
+                throw new NotFoundException("Map is not found.");
+            }
+
+            Path userFolderPath = Paths.get(fileStorageLocation + "/" + owner.getId());
+            Path filePath = userFolderPath.resolve(fileName).normalize();
             Resource resource = new UrlResource(filePath.toUri());
+
             if (resource.exists()) {
                 return resource;
             } else {
-                throw new MyFileNotFoundException("File not found " + fileName);
+                throw new NotFoundException("File is not found " + fileName);
             }
-        } catch (MalformedURLException ex) {
-            throw new MyFileNotFoundException("File not found " + fileName, ex);
+
+        } catch (MalformedURLException e) {
+            throw new NotFoundException("File is not found " + fileName);
         }
     }
 
-    /*private void saveFileInfo() {
-        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        System.out.println(userDetails);
-    }*/
+    private void saveMapData(User owner, Map map) {
+        Map mapFromDb = mapService.getOneByOwnerAndFilename(owner, map.getFilename());
+
+        if (mapFromDb == null) {
+            map.setOwner(owner);
+            mapService.create(map);
+        } else {
+            mapService.update(owner, mapFromDb.getId(), map);
+        }
+    }
+
+    private boolean mapIsOk(Map map) {
+        return map.getFilename() != null &&
+                map.getUpdated() != null &&
+                map.getVersion() != null &&
+                map.getPicture() != null;
+    }
 
 }

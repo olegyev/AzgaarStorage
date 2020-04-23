@@ -42,6 +42,8 @@ public class MapController {
         this.pagedResourcesAssembler = new PagedResourcesAssembler<>(null, null);
     }
 
+    // For create method see: by.azgaar.storage.controller.FileController.uploadFile() = "/upload".
+
     @GetMapping
     public ResponseEntity<PagedModel<MapDto>> getAll(@AuthenticationPrincipal OAuth2User principal,
                                                      @PageableDefault(sort = {"updated"}, direction = Sort.Direction.DESC) Pageable defaultPageable) {

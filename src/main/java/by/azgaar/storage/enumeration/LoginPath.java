@@ -6,7 +6,7 @@ public enum LoginPath {
     GOOGLE("google"),
     FACEBOOK("facebook");
 
-    private String value;
+    private final String value;
 
     LoginPath(String value) {
         this.value = value;

@@ -22,13 +22,18 @@ import java.io.File;
 public class MapServiceImpl implements MapServiceInterface {
 
     private final MapRepo mapRepo;
-
     @Value("${file.upload-dir}")
-    private String path;
+    private String pathToMap;
 
     @Autowired
     public MapServiceImpl(final MapRepo mapRepo) {
         this.mapRepo = mapRepo;
+    }
+
+    @Override
+    @Transactional
+    public Map create(Map map) {
+        return mapRepo.save(map);
     }
 
     @Override
@@ -53,6 +58,12 @@ public class MapServiceImpl implements MapServiceInterface {
 
     @Override
     @Transactional
+    public Map getOneByOwnerAndFilename(User owner, String filename) {
+        return mapRepo.findByOwnerAndFilename(owner, filename);
+    }
+
+    @Override
+    @Transactional
     public Map update(User owner, long id, Map newMap) {
         if (anotherMapIsInDb(owner, newMap.getFilename(), id)) {
             throw new BadRequestException("There is another map with the same filename in DB for logged user.");
@@ -60,12 +71,11 @@ public class MapServiceImpl implements MapServiceInterface {
 
         Map mapFromDb = getOneByOwner(owner, id);
 
-        File f1 = new File(path + "/" + mapFromDb.getFilename());
-        File f2 = new File(path + "/" + newMap.getFilename());
+        File f1 = new File(pathToMap + "/" + mapFromDb.getFilename());
+        File f2 = new File(pathToMap + "/" + newMap.getFilename());
         f1.renameTo(f2);
 
-        // Only "filename".
-        BeanUtils.copyProperties(newMap, mapFromDb, "id", "owner", "updated", "version", "picture");
+        BeanUtils.copyProperties(newMap, mapFromDb, "id", "owner");
 
         return mapFromDb;
     }
@@ -75,15 +85,14 @@ public class MapServiceImpl implements MapServiceInterface {
     public void delete(User owner, long id) {
         Map mapToDelete = getOneByOwner(owner, id);
 
-        File fileToDelete = new File(path + "/" + mapToDelete.getFilename());
+        File fileToDelete = new File(pathToMap + "/" + mapToDelete.getFilename());
         fileToDelete.delete();
 
         mapRepo.delete(mapToDelete);
     }
 
-    @Transactional
-    public boolean anotherMapIsInDb(User owner, String newFilename, long id) {
-        Map foundMap = mapRepo.findByOwnerAndFilename(owner, newFilename);
+    private boolean anotherMapIsInDb(User owner, String newFilename, long id) {
+        Map foundMap = getOneByOwnerAndFilename(owner, newFilename);
         return foundMap != null && foundMap.getId() != id;
     }
 
