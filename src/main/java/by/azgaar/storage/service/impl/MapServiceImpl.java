@@ -5,12 +5,12 @@ import by.azgaar.storage.entity.User;
 import by.azgaar.storage.exception.AccessDeniedException;
 import by.azgaar.storage.exception.BadRequestException;
 import by.azgaar.storage.exception.NotFoundException;
+import by.azgaar.storage.property.FileStorageProperties;
 import by.azgaar.storage.repo.MapRepo;
 import by.azgaar.storage.service.MapServiceInterface;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -21,12 +21,13 @@ import java.io.File;
 @Service
 public class MapServiceImpl implements MapServiceInterface {
 
+    private final String fileStorageLocation;
     private final MapRepo mapRepo;
-    @Value("${file.upload-dir}")
-    private String pathToMap;
 
     @Autowired
-    public MapServiceImpl(final MapRepo mapRepo) {
+    public MapServiceImpl(final FileStorageProperties fileStorageProperties,
+                          final MapRepo mapRepo) {
+        fileStorageLocation = fileStorageProperties.getUploadDir();
         this.mapRepo = mapRepo;
     }
 
@@ -71,6 +72,7 @@ public class MapServiceImpl implements MapServiceInterface {
 
         Map mapFromDb = getOneByOwner(owner, id);
 
+        String pathToMap = fileStorageLocation + "/" + owner.getId();
         File f1 = new File(pathToMap + "/" + mapFromDb.getFilename());
         File f2 = new File(pathToMap + "/" + newMap.getFilename());
         f1.renameTo(f2);
@@ -85,6 +87,7 @@ public class MapServiceImpl implements MapServiceInterface {
     public void delete(User owner, long id) {
         Map mapToDelete = getOneByOwner(owner, id);
 
+        String pathToMap = fileStorageLocation + "/" + owner.getId();
         File fileToDelete = new File(pathToMap + "/" + mapToDelete.getFilename());
         fileToDelete.delete();
 
