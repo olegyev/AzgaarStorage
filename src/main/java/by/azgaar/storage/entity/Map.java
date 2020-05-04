@@ -1,11 +1,7 @@
 package by.azgaar.storage.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
-import lombok.AccessLevel;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.Setter;
 
 import javax.persistence.*;
 
@@ -18,10 +14,8 @@ import java.util.Calendar;
 public class Map extends AzgaarStorageEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Setter(AccessLevel.NONE)
-    @JsonIgnore
-    private long id;
+    @Column(nullable = false, unique = true)
+    private String id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false)
@@ -36,8 +30,5 @@ public class Map extends AzgaarStorageEntity {
 
     @Column(nullable = false)
     private String version;
-
-    @Column(nullable = false)
-    private String picture;
 
 }

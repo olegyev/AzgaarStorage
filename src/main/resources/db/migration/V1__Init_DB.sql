@@ -5,7 +5,6 @@ create table if not exists users
             primary key,
     name        varchar(255) not null,
     email       varchar(255),
-    location    varchar(255),
     first_visit timestamp    not null,
     last_visit  timestamp    not null
 );
@@ -15,7 +14,7 @@ alter table users
 
 create table if not exists maps
 (
-    id       bigserial    not null
+    id       varchar(255) not null
         constraint maps_pkey
             primary key,
     user_id  varchar(255) not null
@@ -23,8 +22,7 @@ create table if not exists maps
             references users,
     filename varchar(255) not null,
     updated  timestamp    not null,
-    version  varchar(255) not null,
-    picture  varchar(255) not null
+    version  varchar(255) not null
 );
 
 alter table maps

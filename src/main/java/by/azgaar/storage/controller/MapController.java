@@ -55,7 +55,7 @@ public class MapController {
 
     @GetMapping("{id}")
     public ResponseEntity<MapDto> getOne(@AuthenticationPrincipal OAuth2User principal,
-                                         @PathVariable long id) {
+                                         @PathVariable String id) {
         User owner = userService.retrieveUser(principal);
         Map map = mapService.getOneByOwner(owner, id);
         MapDto dto = assembler.toModel(map);
@@ -65,7 +65,7 @@ public class MapController {
     @PutMapping("{id}")
     //@CrossOrigin(methods = {RequestMethod.OPTIONS, RequestMethod.PUT})
     public ResponseEntity<MapDto> update(@AuthenticationPrincipal OAuth2User principal,
-                                         @PathVariable long id,
+                                         @PathVariable String id,
                                          @Valid @RequestBody Map newMap) {
         User owner = userService.retrieveUser(principal);
         Map map = mapService.update(owner, id, newMap);
@@ -75,7 +75,7 @@ public class MapController {
 
     @DeleteMapping("{id}")
     public ResponseEntity<HttpStatus> delete(@AuthenticationPrincipal OAuth2User principal,
-                                             @PathVariable long id) {
+                                             @PathVariable String id) {
         User owner = userService.retrieveUser(principal);
         mapService.delete(owner, id);
         return new ResponseEntity<>(HttpStatus.OK);

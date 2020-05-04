@@ -35,12 +35,6 @@ public class UserServiceImpl implements UserServiceInterface {
             user.setId(id);
             user.setName(principal.getAttribute("name"));
             user.setEmail(principal.getAttribute("email"));
-
-            String location = principal.getAttribute("locale") != null ?
-                    principal.getAttribute("locale") :
-                    principal.getAttribute("location");
-
-            user.setLocation(location);
             user.setFirstVisit(LocalDateTime.now());
         }
 

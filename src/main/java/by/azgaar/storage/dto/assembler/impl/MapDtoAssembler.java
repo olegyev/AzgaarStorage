@@ -31,7 +31,6 @@ public class MapDtoAssembler
         dto.setFilename(map.getFilename());
         dto.setUpdated(map.getUpdated());
         dto.setVersion(map.getVersion());
-        dto.setPicture(map.getPicture());
 
         URI downloadPath = ServletUriComponentsBuilder.fromCurrentContextPath().path("/download/" + map.getFilename()).build().toUri();
         dto.setDownloadLink(downloadPath);

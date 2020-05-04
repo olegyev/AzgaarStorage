@@ -45,8 +45,14 @@ public class MapServiceImpl implements MapServiceInterface {
 
     @Override
     @Transactional
-    public Map getOneByOwner(User owner, long id) {
-        Map map = mapRepo.findById(id).orElse(null);
+    public Map getOneById(String id) {
+        return mapRepo.findById(id).orElse(null);
+    }
+
+    @Override
+    @Transactional
+    public Map getOneByOwner(User owner, String id) {
+        Map map = getOneById(id);
 
         if (map == null) {
             throw new NotFoundException("Map is not found.");
@@ -65,8 +71,8 @@ public class MapServiceImpl implements MapServiceInterface {
 
     @Override
     @Transactional
-    public Map update(User owner, long id, Map newMap) {
-        if (anotherMapIsInDb(owner, newMap.getFilename(), id)) {
+    public Map update(User owner, String id, Map newMap) {
+        if (sameFilenameIsInDb(owner, newMap.getFilename(), id)) {
             throw new BadRequestException("There is another map with the same filename in DB for logged user.");
         }
 
@@ -84,7 +90,7 @@ public class MapServiceImpl implements MapServiceInterface {
 
     @Override
     @Transactional
-    public void delete(User owner, long id) {
+    public void delete(User owner, String id) {
         Map mapToDelete = getOneByOwner(owner, id);
 
         String pathToMap = fileStorageLocation + "/" + owner.getId();
@@ -94,9 +100,15 @@ public class MapServiceImpl implements MapServiceInterface {
         mapRepo.delete(mapToDelete);
     }
 
-    private boolean anotherMapIsInDb(User owner, String newFilename, long id) {
+    @Override
+    @Transactional
+    public int countByOwnerAndFilename(User owner, String filename) {
+        return mapRepo.countByOwnerAndFilename(owner, filename);
+    }
+
+    private boolean sameFilenameIsInDb(User owner, String newFilename, String id) {
         Map foundMap = getOneByOwnerAndFilename(owner, newFilename);
-        return foundMap != null && foundMap.getId() != id;
+        return foundMap != null && !foundMap.getId().equals(id);
     }
 
 }

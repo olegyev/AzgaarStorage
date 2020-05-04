@@ -48,9 +48,9 @@ public class FileStorageServiceImpl implements FileStorageServiceInterface {
         String filename = StringUtils.cleanPath(file.getOriginalFilename());
 
         try {
-            if (filename.contains("..")) {
+            if (!isValid(filename)) {
                 throw new FileStorageException("Filename contains invalid path sequence " + filename);
-            } else if (!mapIsOk(map)) {
+            } else if (!bodyIsOk(map)) {
                 throw new BadRequestException("Map data does not contain all required fields.");
             }
 
@@ -68,7 +68,9 @@ public class FileStorageServiceImpl implements FileStorageServiceInterface {
                 userFolderPath = Paths.get(fileStorageLocation + "/" + owner.getId());
             }
 
+            filename = map.getFilename();
             Path targetLocation = userFolderPath.resolve(filename);
+
             Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
             return filename;
 
@@ -77,6 +79,7 @@ public class FileStorageServiceImpl implements FileStorageServiceInterface {
         }
     }
 
+    // CHANGE CONSIDERING NEW ID AND NAMING STRATEGY?
     @Override
     public Resource loadFileAsResource(User owner, String fileName) {
         try {
@@ -102,21 +105,43 @@ public class FileStorageServiceImpl implements FileStorageServiceInterface {
     }
 
     private void saveMapData(User owner, Map map) {
-        Map mapFromDb = mapService.getOneByOwnerAndFilename(owner, map.getFilename());
+        Map mapFromDbByFilename = mapService.getOneByOwnerAndFilename(owner, map.getFilename());
 
-        if (mapFromDb == null) {
+        if (mapFromDbByFilename == null) {
             map.setOwner(owner);
             mapService.create(map);
         } else {
-            mapService.update(owner, mapFromDb.getId(), map);
+
+            if (map.getId().equals(mapFromDbByFilename.getId())) {
+                mapService.update(owner, map.getId(), map);
+            } else {
+                Map mapFromDbById = mapService.getOneById(map.getId());
+
+                if (mapFromDbById != null && map.getId().equals(mapFromDbById.getId())) {
+                    map.setFilename(mapFromDbById.getFilename());
+                    mapService.update(owner, map.getId(), map);
+                } else {
+                    map.setOwner(owner);
+                    map.setFilename(map.getFilename() + "-" + (countSameFilenames(owner, map.getFilename()) + 1));
+                    mapService.create(map);
+                }
+            }
         }
     }
 
-    private boolean mapIsOk(Map map) {
-        return map.getFilename() != null &&
-                map.getUpdated() != null &&
-                map.getVersion() != null &&
-                map.getPicture() != null;
+    private boolean isValid(String filename) {
+        return filename.matches("[-_A-Za-z0-9 ]+");
+    }
+
+    private boolean bodyIsOk(Map body) {
+        return body.getId() != null &&
+                body.getFilename() != null &&
+                body.getUpdated() != null &&
+                body.getVersion() != null;
+    }
+
+    private int countSameFilenames(User owner, String filename) {
+        return mapService.countByOwnerAndFilename(owner, filename);
     }
 
 }
