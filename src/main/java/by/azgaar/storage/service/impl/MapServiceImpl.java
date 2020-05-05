@@ -5,7 +5,6 @@ import by.azgaar.storage.entity.User;
 import by.azgaar.storage.exception.AccessDeniedException;
 import by.azgaar.storage.exception.BadRequestException;
 import by.azgaar.storage.exception.NotFoundException;
-import by.azgaar.storage.property.FileStorageProperties;
 import by.azgaar.storage.repo.MapRepo;
 import by.azgaar.storage.service.MapServiceInterface;
 
@@ -16,24 +15,23 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.File;
-
 @Service
 public class MapServiceImpl implements MapServiceInterface {
 
-    private final String fileStorageLocation;
     private final MapRepo mapRepo;
 
     @Autowired
-    public MapServiceImpl(final FileStorageProperties fileStorageProperties,
-                          final MapRepo mapRepo) {
-        fileStorageLocation = fileStorageProperties.getUploadDir();
+    public MapServiceImpl(final MapRepo mapRepo) {
         this.mapRepo = mapRepo;
     }
 
     @Override
     @Transactional
     public Map create(Map map) {
+        if (!bodyIsOk(map)) {
+            throw new BadRequestException("Map data does not contain all required fields.");
+        }
+
         return mapRepo.save(map);
     }
 
@@ -71,44 +69,68 @@ public class MapServiceImpl implements MapServiceInterface {
 
     @Override
     @Transactional
-    public Map update(User owner, String id, Map newMap) {
-        if (sameFilenameIsInDb(owner, newMap.getFilename(), id)) {
+    public Map update(User owner, Map oldMap, Map newMap) {
+        if (sameFilenameIsInDb(owner, newMap.getFilename(), oldMap.getId())) {
             throw new BadRequestException("There is another map with the same filename in DB for logged user.");
+        } else if (!bodyIsOk(newMap)) {
+            throw new BadRequestException("Map data does not contain all required fields.");
         }
 
-        Map mapFromDb = getOneByOwner(owner, id);
+        BeanUtils.copyProperties(newMap, oldMap, "id", "owner");
 
-        String pathToMap = fileStorageLocation + "/" + owner.getId();
-        File f1 = new File(pathToMap + "/" + mapFromDb.getFilename());
-        File f2 = new File(pathToMap + "/" + newMap.getFilename());
-        f1.renameTo(f2);
-
-        BeanUtils.copyProperties(newMap, mapFromDb, "id", "owner");
-
-        return mapFromDb;
+        return oldMap;
     }
 
     @Override
     @Transactional
-    public void delete(User owner, String id) {
+    public String delete(User owner, String id) {
         Map mapToDelete = getOneByOwner(owner, id);
-
-        String pathToMap = fileStorageLocation + "/" + owner.getId();
-        File fileToDelete = new File(pathToMap + "/" + mapToDelete.getFilename());
-        fileToDelete.delete();
-
         mapRepo.delete(mapToDelete);
+        return mapToDelete.getFilename();
     }
 
     @Override
     @Transactional
-    public int countByOwnerAndFilename(User owner, String filename) {
-        return mapRepo.countByOwnerAndFilename(owner, filename);
+    public void saveMapData(User owner, Map map) {
+        Map mapFromDbByFilename = getOneByOwnerAndFilename(owner, map.getFilename());
+
+        if (mapFromDbByFilename == null) {
+            map.setOwner(owner);
+            create(map);
+        } else {
+
+            if (map.getId().equals(mapFromDbByFilename.getId())) {
+                update(owner, mapFromDbByFilename, map);
+            } else {
+                map.setOwner(owner);
+                map.setFilename(map.getFilename() + "-" + (mapRepo.countByOwnerAndFilename(owner, map.getFilename()) + 1));
+                create(map);
+
+                // CHECK FIRST if()'s CASE BEFORE DELETING!!!
+                /*Map mapFromDbById = mapService.getOneById(map.getId());
+
+                if (mapFromDbById != null && map.getId().equals(mapFromDbById.getId())) {
+                    map.setFilename(mapFromDbById.getFilename());
+                    mapService.update(owner, map.getId(), map);
+                } else {
+                    map.setOwner(owner);
+                    map.setFilename(map.getFilename() + "-" + (countSameFilenames(owner, map.getFilename()) + 1));
+                    mapService.create(map);
+                }*/
+            }
+        }
     }
 
     private boolean sameFilenameIsInDb(User owner, String newFilename, String id) {
         Map foundMap = getOneByOwnerAndFilename(owner, newFilename);
         return foundMap != null && !foundMap.getId().equals(id);
+    }
+
+    private boolean bodyIsOk(Map body) {
+        return body.getId() != null &&
+                body.getFilename() != null &&
+                body.getUpdated() != null &&
+                body.getVersion() != null;
     }
 
 }

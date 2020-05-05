@@ -4,6 +4,7 @@ import by.azgaar.storage.dto.MapDto;
 import by.azgaar.storage.dto.assembler.DtoAssemblerInterface;
 import by.azgaar.storage.entity.Map;
 import by.azgaar.storage.entity.User;
+import by.azgaar.storage.service.FileStorageServiceInterface;
 import by.azgaar.storage.service.MapServiceInterface;
 import by.azgaar.storage.service.UserServiceInterface;
 
@@ -29,15 +30,18 @@ public class MapController {
 
     private final UserServiceInterface userService;
     private final MapServiceInterface mapService;
+    private final FileStorageServiceInterface fileStorageService;
     private final DtoAssemblerInterface<Map, MapDto> assembler;
     private final PagedResourcesAssembler<Map> pagedResourcesAssembler;
 
     @Autowired
     public MapController(final UserServiceInterface userService,
                          final MapServiceInterface mapService,
+                         final FileStorageServiceInterface fileStorageService,
                          final DtoAssemblerInterface<Map, MapDto> assembler) {
         this.userService = userService;
         this.mapService = mapService;
+        this.fileStorageService = fileStorageService;
         this.assembler = assembler;
         this.pagedResourcesAssembler = new PagedResourcesAssembler<>(null, null);
     }
@@ -68,8 +72,14 @@ public class MapController {
                                          @PathVariable String id,
                                          @Valid @RequestBody Map newMap) {
         User owner = userService.retrieveUser(principal);
-        Map map = mapService.update(owner, id, newMap);
-        MapDto dto = assembler.toModel(map);
+        Map oldMap = mapService.getOneByOwner(owner, id);
+        String oldMapFilename = oldMap.getFilename();
+        Map updatedMap = mapService.update(owner, oldMap /*id*/, newMap);
+        fileStorageService.updateS3Map(
+                owner.getId() + "/" + oldMapFilename,
+                owner.getId() + "/" + updatedMap.getFilename()
+        );
+        MapDto dto = assembler.toModel(updatedMap);
         return new ResponseEntity<>(dto, HttpStatus.CREATED);
     }
 
@@ -77,7 +87,8 @@ public class MapController {
     public ResponseEntity<HttpStatus> delete(@AuthenticationPrincipal OAuth2User principal,
                                              @PathVariable String id) {
         User owner = userService.retrieveUser(principal);
-        mapService.delete(owner, id);
+        String mapToDeleteFilename = mapService.delete(owner, id);
+        fileStorageService.deleteS3Map(owner.getId() + "/" + mapToDeleteFilename);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 

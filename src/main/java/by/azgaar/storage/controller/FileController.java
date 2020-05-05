@@ -6,10 +6,10 @@ import by.azgaar.storage.entity.User;
 import by.azgaar.storage.service.FileStorageServiceInterface;
 import by.azgaar.storage.service.UserServiceInterface;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.amazonaws.services.s3.model.S3Object;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -21,16 +21,11 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import javax.servlet.http.HttpServletRequest;
-
-import java.io.IOException;
 import java.net.URI;
 
 @RestController
 @CrossOrigin(origins = "null", allowCredentials = "true")
 public class FileController {
-
-    private static final Logger logger = LoggerFactory.getLogger(FileController.class);
 
     private final UserServiceInterface userService;
     private final FileStorageServiceInterface fileStorageService;
@@ -44,11 +39,11 @@ public class FileController {
 
     // Front-end: modules/save-and-load.js, from line 283.
     @PostMapping("upload")
-    public ResponseEntity<UploadDto> uploadFile(@AuthenticationPrincipal OAuth2User principal,
-                                                @RequestPart("file") MultipartFile file,
-                                                @RequestPart("map") Map map) {
+    public ResponseEntity<UploadDto> uploadMap(@AuthenticationPrincipal OAuth2User principal,
+                                               @RequestPart("file") MultipartFile file,
+                                               @RequestPart("map") Map map) {
         User owner = userService.retrieveUser(principal);
-        String filename = fileStorageService.storeFile(owner, file, map);
+        String filename = fileStorageService.putS3Map(owner, file, map);
         URI downloadPath = ServletUriComponentsBuilder.fromCurrentContextPath().path("/download/" + filename).build().toUri();
         UploadDto dto = new UploadDto(owner.getName(), filename, downloadPath, file.getContentType(), file.getSize());
         return new ResponseEntity<>(dto, HttpStatus.CREATED);
@@ -56,27 +51,18 @@ public class FileController {
 
     // Front-end: main.js, from line 178.
     @GetMapping("download/{filename:.+}")
-    public ResponseEntity<Resource> downloadFile(@AuthenticationPrincipal OAuth2User principal,
-                                                 @PathVariable String filename,
-                                                 HttpServletRequest request) {
+    public ResponseEntity<Resource> downloadMap(@AuthenticationPrincipal OAuth2User principal,
+                                                @PathVariable String filename) {
         User owner = userService.retrieveUser(principal);
-        Resource resource = fileStorageService.loadFileAsResource(owner, filename);
-
-        String contentType = null;
-        try {
-            contentType = request.getServletContext().getMimeType(resource.getFile().getAbsolutePath());
-        } catch (IOException e) {
-            logger.info("Could not determine file type.");
-        }
-
-        if (contentType == null) {
-            contentType = "application/octet-stream";
-        }
+        S3Object mapToDownload = fileStorageService.getS3Map(owner, filename);
+        String contentType = mapToDownload.getObjectMetadata().getContentType() != null ?
+                mapToDownload.getObjectMetadata().getContentType() :
+                "application/octet-stream";
 
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(contentType))
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + resource.getFilename() + "\"")
-                .body(resource);
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename /*inputStream.getFilename()*/ + "\"")
+                .body(new InputStreamResource(mapToDownload.getObjectContent())/*mapToDownload.getObjectContent()*/);
     }
 
 }

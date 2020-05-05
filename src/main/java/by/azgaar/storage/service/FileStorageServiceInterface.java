@@ -3,13 +3,18 @@ package by.azgaar.storage.service;
 import by.azgaar.storage.entity.Map;
 import by.azgaar.storage.entity.User;
 
-import org.springframework.core.io.Resource;
+import com.amazonaws.services.s3.model.S3Object;
+
 import org.springframework.web.multipart.MultipartFile;
 
 public interface FileStorageServiceInterface {
 
-    String storeFile(User owner, MultipartFile file, Map map);
+    String putS3Map(User owner, MultipartFile file, Map map);
 
-    Resource loadFileAsResource(User owner, String filename);
+    S3Object getS3Map(User owner, String filename);
+
+    void updateS3Map(String oldFilename, String newFilename);
+
+    void deleteS3Map(String filename);
 
 }

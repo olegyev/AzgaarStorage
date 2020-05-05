@@ -9,124 +9,102 @@ import by.azgaar.storage.property.FileStorageProperties;
 import by.azgaar.storage.service.FileStorageServiceInterface;
 import by.azgaar.storage.service.MapServiceInterface;
 
+import com.amazonaws.SdkClientException;
+import com.amazonaws.auth.AWSStaticCredentialsProvider;
+import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.regions.Regions;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3ClientBuilder;
+import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.model.S3Object;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 
 @Service
 public class FileStorageServiceImpl implements FileStorageServiceInterface {
 
-    private final Path fileStorageLocation;
+    private final AmazonS3 s3Client;
+    private final String bucket;
     private final MapServiceInterface mapService;
 
     @Autowired
     public FileStorageServiceImpl(final FileStorageProperties fileStorageProperties,
                                   final MapServiceInterface mapService) {
-        fileStorageLocation = Paths.get(fileStorageProperties.getUploadDir()).toAbsolutePath().normalize();
+        String accessKey = fileStorageProperties.getAccessKey();
+        String secretKey = fileStorageProperties.getSecretKey();
+        String region = fileStorageProperties.getRegion();
+        String bucket = fileStorageProperties.getS3Bucket();
+
+        BasicAWSCredentials credentials = new BasicAWSCredentials(accessKey, secretKey);
+
+        s3Client = AmazonS3ClientBuilder.standard()
+                .withRegion(Regions.valueOf(region))
+                .withCredentials(new AWSStaticCredentialsProvider(credentials))
+                .build();
 
         try {
-            Files.createDirectories(fileStorageLocation);
-        } catch (Exception e) {
-            throw new FileStorageException("Cannot create directory where the uploaded files will be stored.");
+            this.bucket = s3Client.doesBucketExistV2(bucket) ? bucket : s3Client.createBucket(bucket).toString();
+        } catch (SdkClientException e) {
+            throw new FileStorageException("Cannot create AWS S3 bucket where the uploaded files will be stored.");
         }
 
         this.mapService = mapService;
     }
 
     @Override
-    public String storeFile(User owner, MultipartFile file, Map map) {
+    public String putS3Map(User owner, MultipartFile file, Map map) {
         String filename = StringUtils.cleanPath(file.getOriginalFilename());
 
         try {
             if (!isValid(filename)) {
-                throw new FileStorageException("Filename contains invalid path sequence " + filename);
+                throw new FileStorageException("Filename contains invalid path sequence " + filename + ".");
             } else if (!bodyIsOk(map)) {
                 throw new BadRequestException("Map data does not contain all required fields.");
             }
 
-            saveMapData(owner, map);
-
-            Path userFolderPath;
-            if (Files.notExists(Paths.get(fileStorageLocation + "/" + owner.getId()))) {
-                try {
-                    userFolderPath = Paths.get(fileStorageLocation + "/" + owner.getId());
-                    Files.createDirectories(userFolderPath);
-                } catch (Exception e) {
-                    throw new FileStorageException("Cannot create directory for user " + owner.getName());
-                }
-            } else {
-                userFolderPath = Paths.get(fileStorageLocation + "/" + owner.getId());
-            }
-
+            mapService.saveMapData(owner, map);
             filename = map.getFilename();
-            Path targetLocation = userFolderPath.resolve(filename);
 
-            Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
+            ObjectMetadata fileData = new ObjectMetadata();
+            fileData.setContentType(file.getContentType());
+            fileData.setContentLength(file.getSize());
+
+            s3Client.putObject(bucket, (owner.getId() + "/" + filename), file.getInputStream(), fileData);
+
             return filename;
-
         } catch (IOException e) {
             throw new FileStorageException("Cannot store file " + filename + ". Please try again!");
         }
     }
 
-    // CHANGE CONSIDERING NEW ID AND NAMING STRATEGY?
     @Override
-    public Resource loadFileAsResource(User owner, String fileName) {
-        try {
-            Map mapToDownload = mapService.getOneByOwnerAndFilename(owner, fileName);
+    public S3Object getS3Map(User owner, String filename) {
+        Map mapToDownload = mapService.getOneByOwnerAndFilename(owner, filename);
 
-            if (mapToDownload == null) {
-                throw new NotFoundException("Map is not found.");
-            }
-
-            Path userFolderPath = Paths.get(fileStorageLocation + "/" + owner.getId());
-            Path filePath = userFolderPath.resolve(fileName).normalize();
-            Resource resource = new UrlResource(filePath.toUri());
-
-            if (resource.exists()) {
-                return resource;
-            } else {
-                throw new NotFoundException("File is not found " + fileName);
-            }
-
-        } catch (MalformedURLException e) {
-            throw new NotFoundException("File is not found " + fileName);
+        if (mapToDownload == null) {
+            throw new NotFoundException("Map is not found.");
         }
+
+        return s3Client.getObject(bucket, owner.getId() + "/" + filename);
     }
 
-    private void saveMapData(User owner, Map map) {
-        Map mapFromDbByFilename = mapService.getOneByOwnerAndFilename(owner, map.getFilename());
+    @Override
+    public void updateS3Map(String oldFilename, String newFilename) {
+        s3Client.copyObject(
+                bucket, oldFilename,
+                bucket, newFilename
+        );
+        deleteS3Map(oldFilename);
+    }
 
-        if (mapFromDbByFilename == null) {
-            map.setOwner(owner);
-            mapService.create(map);
-        } else {
-
-            if (map.getId().equals(mapFromDbByFilename.getId())) {
-                mapService.update(owner, map.getId(), map);
-            } else {
-                Map mapFromDbById = mapService.getOneById(map.getId());
-
-                if (mapFromDbById != null && map.getId().equals(mapFromDbById.getId())) {
-                    map.setFilename(mapFromDbById.getFilename());
-                    mapService.update(owner, map.getId(), map);
-                } else {
-                    map.setOwner(owner);
-                    map.setFilename(map.getFilename() + "-" + (countSameFilenames(owner, map.getFilename()) + 1));
-                    mapService.create(map);
-                }
-            }
-        }
+    @Override
+    public void deleteS3Map(String filename) {
+        s3Client.deleteObject(bucket, filename);
     }
 
     private boolean isValid(String filename) {
@@ -138,10 +116,6 @@ public class FileStorageServiceImpl implements FileStorageServiceInterface {
                 body.getFilename() != null &&
                 body.getUpdated() != null &&
                 body.getVersion() != null;
-    }
-
-    private int countSameFilenames(User owner, String filename) {
-        return mapService.countByOwnerAndFilename(owner, filename);
     }
 
 }

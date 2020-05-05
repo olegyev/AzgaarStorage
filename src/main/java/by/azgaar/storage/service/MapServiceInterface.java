@@ -18,10 +18,10 @@ public interface MapServiceInterface {
 
     Map getOneByOwnerAndFilename(User owner, String filename);
 
-    Map update(User owner, String id, Map newMap);
+    Map update(User owner, Map oldMap, Map newMap);
 
-    void delete(User owner, String id);
+    String delete(User owner, String id);
 
-    int countByOwnerAndFilename(User owner, String filename);
+    void saveMapData(User owner, Map map);
 
 }
