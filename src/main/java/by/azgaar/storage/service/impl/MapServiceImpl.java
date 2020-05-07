@@ -5,6 +5,7 @@ import by.azgaar.storage.entity.User;
 import by.azgaar.storage.exception.AccessDeniedException;
 import by.azgaar.storage.exception.BadRequestException;
 import by.azgaar.storage.exception.NotFoundException;
+import by.azgaar.storage.property.FileStorageProperties;
 import by.azgaar.storage.repo.MapRepo;
 import by.azgaar.storage.service.MapServiceInterface;
 
@@ -18,10 +19,13 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class MapServiceImpl implements MapServiceInterface {
 
+    private final int maxSlotsNum;
     private final MapRepo mapRepo;
 
     @Autowired
-    public MapServiceImpl(final MapRepo mapRepo) {
+    public MapServiceImpl(final FileStorageProperties fileStorageProperties,
+                          final MapRepo mapRepo) {
+        maxSlotsNum = Integer.parseInt(fileStorageProperties.getMaxSlotsNum());
         this.mapRepo = mapRepo;
     }
 
@@ -43,13 +47,13 @@ public class MapServiceImpl implements MapServiceInterface {
 
     @Override
     @Transactional
-    public Map getOneById(String id) {
+    public Map getOneById(long id) {
         return mapRepo.findById(id).orElse(null);
     }
 
     @Override
     @Transactional
-    public Map getOneByOwner(User owner, String id) {
+    public Map getOneByOwner(User owner, long id) {
         Map map = getOneById(id);
 
         if (map == null) {
@@ -76,14 +80,14 @@ public class MapServiceImpl implements MapServiceInterface {
             throw new BadRequestException("Map data does not contain all required fields.");
         }
 
-        BeanUtils.copyProperties(newMap, oldMap, "id", "owner");
+        BeanUtils.copyProperties(newMap, oldMap, "id", "owner", "fileId");
 
         return oldMap;
     }
 
     @Override
     @Transactional
-    public String delete(User owner, String id) {
+    public String delete(User owner, long id) {
         Map mapToDelete = getOneByOwner(owner, id);
         mapRepo.delete(mapToDelete);
         return mapToDelete.getFilename();
@@ -92,6 +96,10 @@ public class MapServiceImpl implements MapServiceInterface {
     @Override
     @Transactional
     public void saveMapData(User owner, Map map) {
+        if (mapRepo.countByOwnerAndFileId(owner, map.getFileId()) == maxSlotsNum) {
+            throw new BadRequestException("Map cannot be stored. You are out of memory slots for this map.");
+        }
+
         Map mapFromDbByFilename = getOneByOwnerAndFilename(owner, map.getFilename());
 
         if (mapFromDbByFilename == null) {
@@ -99,35 +107,23 @@ public class MapServiceImpl implements MapServiceInterface {
             create(map);
         } else {
 
-            if (map.getId().equals(mapFromDbByFilename.getId())) {
+            if (map.getFileId().equals(mapFromDbByFilename.getFileId())) {
                 update(owner, mapFromDbByFilename, map);
             } else {
                 map.setOwner(owner);
                 map.setFilename(map.getFilename() + "-" + (mapRepo.countByOwnerAndFilename(owner, map.getFilename()) + 1));
                 create(map);
-
-                // CHECK FIRST if()'s CASE BEFORE DELETING!!!
-                /*Map mapFromDbById = mapService.getOneById(map.getId());
-
-                if (mapFromDbById != null && map.getId().equals(mapFromDbById.getId())) {
-                    map.setFilename(mapFromDbById.getFilename());
-                    mapService.update(owner, map.getId(), map);
-                } else {
-                    map.setOwner(owner);
-                    map.setFilename(map.getFilename() + "-" + (countSameFilenames(owner, map.getFilename()) + 1));
-                    mapService.create(map);
-                }*/
             }
         }
     }
 
-    private boolean sameFilenameIsInDb(User owner, String newFilename, String id) {
+    private boolean sameFilenameIsInDb(User owner, String newFilename, long id) {
         Map foundMap = getOneByOwnerAndFilename(owner, newFilename);
-        return foundMap != null && !foundMap.getId().equals(id);
+        return foundMap != null && foundMap.getId() != id;
     }
 
     private boolean bodyIsOk(Map body) {
-        return body.getId() != null &&
+        return body.getFileId() != null &&
                 body.getFilename() != null &&
                 body.getUpdated() != null &&
                 body.getVersion() != null;

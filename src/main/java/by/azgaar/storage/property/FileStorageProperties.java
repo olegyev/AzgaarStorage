@@ -14,5 +14,6 @@ public class FileStorageProperties {
     private String secretKey;
     private String region;
     private String s3Bucket;
+    private String maxSlotsNum;
 
 }

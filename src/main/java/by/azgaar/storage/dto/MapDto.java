@@ -14,6 +14,8 @@ public class MapDto extends AbstractDto {
 
     private String owner;
 
+    private String fileId;
+
     private String filename;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")

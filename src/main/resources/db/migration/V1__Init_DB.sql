@@ -14,12 +14,13 @@ alter table users
 
 create table if not exists maps
 (
-    id       varchar(255) not null
+    id       bigserial    not null
         constraint maps_pkey
             primary key,
     user_id  varchar(255) not null
         constraint maps_users_id_fk
             references users,
+    file_id  varchar(255) not null,
     filename varchar(255) not null,
     updated  timestamp    not null,
     version  varchar(255) not null

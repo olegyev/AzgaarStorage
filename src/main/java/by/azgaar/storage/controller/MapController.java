@@ -46,7 +46,7 @@ public class MapController {
         this.pagedResourcesAssembler = new PagedResourcesAssembler<>(null, null);
     }
 
-    // For create method see: by.azgaar.storage.controller.FileController.uploadFile() = "/upload".
+    // For create method see: by.azgaar.storage.controller.FileController.uploadMap() = "/upload".
 
     @GetMapping
     public ResponseEntity<PagedModel<MapDto>> getAll(@AuthenticationPrincipal OAuth2User principal,
@@ -59,7 +59,7 @@ public class MapController {
 
     @GetMapping("{id}")
     public ResponseEntity<MapDto> getOne(@AuthenticationPrincipal OAuth2User principal,
-                                         @PathVariable String id) {
+                                         @PathVariable long id) {
         User owner = userService.retrieveUser(principal);
         Map map = mapService.getOneByOwner(owner, id);
         MapDto dto = assembler.toModel(map);
@@ -69,12 +69,12 @@ public class MapController {
     @PutMapping("{id}")
     //@CrossOrigin(methods = {RequestMethod.OPTIONS, RequestMethod.PUT})
     public ResponseEntity<MapDto> update(@AuthenticationPrincipal OAuth2User principal,
-                                         @PathVariable String id,
+                                         @PathVariable long id,
                                          @Valid @RequestBody Map newMap) {
         User owner = userService.retrieveUser(principal);
         Map oldMap = mapService.getOneByOwner(owner, id);
         String oldMapFilename = oldMap.getFilename();
-        Map updatedMap = mapService.update(owner, oldMap /*id*/, newMap);
+        Map updatedMap = mapService.update(owner, oldMap, newMap);
         fileStorageService.updateS3Map(
                 owner.getId() + "/" + oldMapFilename,
                 owner.getId() + "/" + updatedMap.getFilename()
@@ -85,7 +85,7 @@ public class MapController {
 
     @DeleteMapping("{id}")
     public ResponseEntity<HttpStatus> delete(@AuthenticationPrincipal OAuth2User principal,
-                                             @PathVariable String id) {
+                                             @PathVariable long id) {
         User owner = userService.retrieveUser(principal);
         String mapToDeleteFilename = mapService.delete(owner, id);
         fileStorageService.deleteS3Map(owner.getId() + "/" + mapToDeleteFilename);

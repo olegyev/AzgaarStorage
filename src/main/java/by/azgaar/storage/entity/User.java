@@ -1,5 +1,7 @@
 package by.azgaar.storage.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -18,6 +20,7 @@ public class User extends AzgaarStorageEntity {
 
     @Id
     @Column(nullable = false, unique = true)
+    @JsonIgnore
     private String id;
 
     @Column(nullable = false)

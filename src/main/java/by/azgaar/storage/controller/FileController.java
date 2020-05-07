@@ -61,8 +61,8 @@ public class FileController {
 
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(contentType))
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename /*inputStream.getFilename()*/ + "\"")
-                .body(new InputStreamResource(mapToDownload.getObjectContent())/*mapToDownload.getObjectContent()*/);
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .body(new InputStreamResource(mapToDownload.getObjectContent()));
     }
 
 }

@@ -28,6 +28,7 @@ public class MapDtoAssembler
         MapDto dto = createModelWithId(map.getId(), map);
 
         dto.setOwner(map.getOwner().getName());
+        dto.setFileId(map.getFileId());
         dto.setFilename(map.getFilename());
         dto.setUpdated(map.getUpdated());
         dto.setVersion(map.getVersion());

@@ -12,15 +12,15 @@ public interface MapServiceInterface {
 
     Page<Map> getAllByOwner(User owner, Pageable pageable);
 
-    Map getOneById(String id);
+    Map getOneById(long id);
 
-    Map getOneByOwner(User owner, String id);
+    Map getOneByOwner(User owner, long id);
 
     Map getOneByOwnerAndFilename(User owner, String filename);
 
     Map update(User owner, Map oldMap, Map newMap);
 
-    String delete(User owner, String id);
+    String delete(User owner, long id);
 
     void saveMapData(User owner, Map map);
 

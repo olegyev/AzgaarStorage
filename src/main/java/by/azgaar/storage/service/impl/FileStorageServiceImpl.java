@@ -16,7 +16,9 @@ import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.model.PublicAccessBlockConfiguration;
 import com.amazonaws.services.s3.model.S3Object;
+import com.amazonaws.services.s3.model.SetPublicAccessBlockRequest;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -48,10 +50,18 @@ public class FileStorageServiceImpl implements FileStorageServiceInterface {
                 .build();
 
         try {
-            this.bucket = s3Client.doesBucketExistV2(bucket) ? bucket : s3Client.createBucket(bucket).toString();
+            this.bucket = s3Client.doesBucketExistV2(bucket) ? bucket : s3Client.createBucket(bucket).getName();
         } catch (SdkClientException e) {
             throw new FileStorageException("Cannot create AWS S3 bucket where the uploaded files will be stored.");
         }
+
+        s3Client.setPublicAccessBlock(new SetPublicAccessBlockRequest()
+                .withBucketName(bucket)
+                .withPublicAccessBlockConfiguration(new PublicAccessBlockConfiguration()
+                        .withBlockPublicAcls(true)
+                        .withIgnorePublicAcls(true)
+                        .withBlockPublicPolicy(true)
+                        .withRestrictPublicBuckets(true)));
 
         this.mapService = mapService;
     }
@@ -112,7 +122,7 @@ public class FileStorageServiceImpl implements FileStorageServiceInterface {
     }
 
     private boolean bodyIsOk(Map body) {
-        return body.getId() != null &&
+        return body.getFileId() != null &&
                 body.getFilename() != null &&
                 body.getUpdated() != null &&
                 body.getVersion() != null;
