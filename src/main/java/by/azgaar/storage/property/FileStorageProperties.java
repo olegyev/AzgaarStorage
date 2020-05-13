@@ -10,10 +10,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @Setter
 public class FileStorageProperties {
 
-    private String accessKey;
-    private String secretKey;
-    private String region;
     private String s3Bucket;
-    private String maxSlotsNum;
 
 }

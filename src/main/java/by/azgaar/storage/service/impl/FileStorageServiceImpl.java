@@ -10,9 +10,6 @@ import by.azgaar.storage.service.FileStorageServiceInterface;
 import by.azgaar.storage.service.MapServiceInterface;
 
 import com.amazonaws.SdkClientException;
-import com.amazonaws.auth.AWSStaticCredentialsProvider;
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.ObjectMetadata;
@@ -37,17 +34,9 @@ public class FileStorageServiceImpl implements FileStorageServiceInterface {
     @Autowired
     public FileStorageServiceImpl(final FileStorageProperties fileStorageProperties,
                                   final MapServiceInterface mapService) {
-        String accessKey = fileStorageProperties.getAccessKey();
-        String secretKey = fileStorageProperties.getSecretKey();
-        String region = fileStorageProperties.getRegion();
         String bucket = fileStorageProperties.getS3Bucket();
 
-        BasicAWSCredentials credentials = new BasicAWSCredentials(accessKey, secretKey);
-
-        s3Client = AmazonS3ClientBuilder.standard()
-                .withRegion(Regions.valueOf(region))
-                .withCredentials(new AWSStaticCredentialsProvider(credentials))
-                .build();
+        s3Client = AmazonS3ClientBuilder.standard().build();
 
         try {
             this.bucket = s3Client.doesBucketExistV2(bucket) ? bucket : s3Client.createBucket(bucket).getName();

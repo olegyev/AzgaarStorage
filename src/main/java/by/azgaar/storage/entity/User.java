@@ -29,6 +29,9 @@ public class User extends AzgaarStorageEntity {
     private String email;
 
     @Column(nullable = false)
+    private int memorySlotsNum = 3;
+
+    @Column(nullable = false)
     private LocalDateTime firstVisit;
 
     @Column(nullable = false)

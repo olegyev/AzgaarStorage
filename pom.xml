@@ -20,7 +20,7 @@
     <properties>
         <java.version>1.8</java.version>
         <swagger.version>2.9.2</swagger.version>
-        <s3.version>1.11.774</s3.version>
+        <s3.version>1.11.778</s3.version>
     </properties>
 
     <build>

@@ -5,7 +5,6 @@ import by.azgaar.storage.entity.User;
 import by.azgaar.storage.exception.AccessDeniedException;
 import by.azgaar.storage.exception.BadRequestException;
 import by.azgaar.storage.exception.NotFoundException;
-import by.azgaar.storage.property.FileStorageProperties;
 import by.azgaar.storage.repo.MapRepo;
 import by.azgaar.storage.service.MapServiceInterface;
 
@@ -19,13 +18,10 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class MapServiceImpl implements MapServiceInterface {
 
-    private final int maxSlotsNum;
     private final MapRepo mapRepo;
 
     @Autowired
-    public MapServiceImpl(final FileStorageProperties fileStorageProperties,
-                          final MapRepo mapRepo) {
-        maxSlotsNum = Integer.parseInt(fileStorageProperties.getMaxSlotsNum());
+    public MapServiceImpl(final MapRepo mapRepo) {
         this.mapRepo = mapRepo;
     }
 
@@ -96,7 +92,7 @@ public class MapServiceImpl implements MapServiceInterface {
     @Override
     @Transactional
     public void saveMapData(User owner, Map map) {
-        if (mapRepo.countByOwnerAndFileId(owner, map.getFileId()) == maxSlotsNum) {
+        if (mapRepo.countByOwnerAndFileId(owner, map.getFileId()) == owner.getMemorySlotsNum()) {
             throw new BadRequestException("Map cannot be stored. You are out of memory slots for this map.");
         }
 

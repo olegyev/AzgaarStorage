@@ -1,12 +1,13 @@
 create table if not exists users
 (
-    id          varchar(255) not null
+    id           varchar(255) not null
         constraint users_pkey
             primary key,
-    name        varchar(255) not null,
-    email       varchar(255),
-    first_visit timestamp    not null,
-    last_visit  timestamp    not null
+    name         varchar(255) not null,
+    email        varchar(255),
+    memory_slots_num integer      not null,
+    first_visit  timestamp    not null,
+    last_visit   timestamp    not null
 );
 
 alter table users
