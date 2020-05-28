@@ -37,7 +37,6 @@ public class FileController {
         this.fileStorageService = fileStorageService;
     }
 
-    // Front-end: modules/save-and-load.js, from line 283.
     @PostMapping("upload")
     public ResponseEntity<UploadDto> uploadMap(@AuthenticationPrincipal OAuth2User principal,
                                                @RequestPart("file") MultipartFile file,
@@ -49,7 +48,6 @@ public class FileController {
         return new ResponseEntity<>(dto, HttpStatus.CREATED);
     }
 
-    // Front-end: main.js, from line 178.
     @GetMapping("download/{filename:.+}")
     public ResponseEntity<Resource> downloadMap(@AuthenticationPrincipal OAuth2User principal,
                                                 @PathVariable String filename) {

@@ -16,9 +16,6 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
             /* Root */
             "/",
 
-            /* Login */
-            "/login",
-
             /* Swagger */
             "/swagger-resources/**",
             "/swagger-ui.html",
@@ -43,7 +40,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .and()
                 .csrf().disable()/*csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                 .and()*/
-                .oauth2Login()/*.redirectionEndpoint().baseUri("/super")*/;
+                .oauth2Login();
     }
 
 }
