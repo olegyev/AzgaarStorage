@@ -28,15 +28,9 @@ public class UserServiceImpl implements UserServiceInterface {
                 principal.getAttribute("sub") :
                 principal.getAttribute("id").toString();
 
-        User user = userRepo.findById(id).orElse(null);
-
-        if (user == null) {
-            user = new User();
-            user.setId(id);
-            user.setName(principal.getAttribute("name"));
-            user.setEmail(principal.getAttribute("email"));
-            user.setFirstVisit(LocalDateTime.now());
-        }
+        User user = userRepo.findById(id).orElse(
+                new User(id, principal.getAttribute("name"), principal.getAttribute("email"), LocalDateTime.now())
+        );
 
         user.setLastVisit(LocalDateTime.now());
         return userRepo.save(user);
