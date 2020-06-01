@@ -24,7 +24,6 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import java.net.URI;
 
 @RestController
-@CrossOrigin(origins = "null", allowCredentials = "true")
 public class FileController {
 
     private final UserServiceInterface userService;
@@ -37,7 +36,7 @@ public class FileController {
         this.fileStorageService = fileStorageService;
     }
 
-    @PostMapping("upload")
+    @PostMapping("/upload")
     public ResponseEntity<UploadDto> uploadMap(@AuthenticationPrincipal OAuth2User principal,
                                                @RequestPart("file") MultipartFile file,
                                                @RequestPart("map") Map map) {
@@ -48,7 +47,7 @@ public class FileController {
         return new ResponseEntity<>(dto, HttpStatus.CREATED);
     }
 
-    @GetMapping("download/{filename:.+}")
+    @GetMapping("/download/{filename:.+}")
     public ResponseEntity<Resource> downloadMap(@AuthenticationPrincipal OAuth2User principal,
                                                 @PathVariable String filename) {
         User owner = userService.retrieveUser(principal);

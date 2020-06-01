@@ -2,44 +2,41 @@ package by.azgaar.storage.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import lombok.*;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import javax.persistence.*;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 
 @Entity
 @Table(name = "users")
 @Data
-@NoArgsConstructor
-@RequiredArgsConstructor
 @EqualsAndHashCode(callSuper = false)
 public class User extends AzgaarStorageEntity {
 
     @Id
     @Column(nullable = false, unique = true)
-    @NonNull
     @JsonIgnore
     private String id;
 
     @Column(nullable = false)
-    @NonNull
     private String name;
 
-    @NonNull
     private String email;
 
     @Column(nullable = false)
     private int memorySlotsNum = 3;
 
     @Column(nullable = false)
-    @NonNull
-    private LocalDateTime firstVisit;
+    private Calendar firstVisit;
 
     @Column(nullable = false)
-    private LocalDateTime lastVisit;
+    private Calendar lastVisit;
 
     @EqualsAndHashCode.Exclude
     @ToString.Exclude

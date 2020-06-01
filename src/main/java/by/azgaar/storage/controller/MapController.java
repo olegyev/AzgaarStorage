@@ -24,8 +24,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.validation.Valid;
 
 @RestController
-@RequestMapping("maps")
-@CrossOrigin(origins = "null", allowCredentials = "true")
+@RequestMapping("/maps")
 public class MapController {
 
     private final UserServiceInterface userService;
