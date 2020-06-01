@@ -50,11 +50,10 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                         .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
                 )
                 .logout(l -> l
-                        .logoutSuccessUrl("/")/*.permitAll()*/
+                        .logoutSuccessUrl("/")
                         .invalidateHttpSession(true)
                         .clearAuthentication(true)
-                        /*.logoutSuccessUrl("/login?logout")*/
-                        .deleteCookies("JSESSIONID").permitAll()
+                        .deleteCookies("JSESSIONID", "XSRF-TOKEN").permitAll()
                 )
                 .cors()
                 .and()

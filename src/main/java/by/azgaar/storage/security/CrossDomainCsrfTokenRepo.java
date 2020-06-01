@@ -1,16 +1,12 @@
 package by.azgaar.storage.security;
 
-import org.springframework.boot.web.servlet.server.Session;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.security.web.csrf.CsrfTokenRepository;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 
-import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.util.Date;
 
 /**
  * This class is essentially a wrapper for a cookie based CSRF protection scheme.
@@ -28,12 +24,11 @@ public class CrossDomainCsrfTokenRepo implements CsrfTokenRepository {
     public static final String XSRF_HEADER_NAME = "X-XSRF-TOKEN";
     public static final String XSRF_TOKEN_COOKIE_NAME = "XSRF-TOKEN";
     private static final String CSRF_QUERY_PARAM_NAME = "_csrf";
+    private final CookieCsrfTokenRepository delegate = new CookieCsrfTokenRepository();
     private CsrfToken token;
 
-    private final CookieCsrfTokenRepository delegate = new CookieCsrfTokenRepository();
-
     public CrossDomainCsrfTokenRepo() {
-        delegate.setCookieHttpOnly(false);
+        delegate.setCookieHttpOnly(true);
         delegate.setHeaderName(XSRF_HEADER_NAME);
         delegate.setCookieName(XSRF_TOKEN_COOKIE_NAME);
         delegate.setParameterName(CSRF_QUERY_PARAM_NAME);
