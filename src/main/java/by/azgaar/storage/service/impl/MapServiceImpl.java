@@ -69,6 +69,12 @@ public class MapServiceImpl implements MapServiceInterface {
 
     @Override
     @Transactional
+    public Map getOneByOwnerAndFileIdAndFilename(User owner, String fileId, String filename) {
+        return mapRepo.findByOwnerAndFileIdAndFilename(owner, fileId, filename);
+    }
+
+    @Override
+    @Transactional
     public Map update(User owner, Map oldMap, Map newMap) {
         if (sameFilenameIsInDb(owner, newMap.getFilename(), oldMap.getId())) {
             throw new BadRequestException("There is another map with the same filename in DB for logged user.");
@@ -92,17 +98,18 @@ public class MapServiceImpl implements MapServiceInterface {
     @Override
     @Transactional
     public void saveMapData(User owner, Map map) {
-        if (mapRepo.countByOwnerAndFileId(owner, map.getFileId()) == owner.getMemorySlotsNum()) {
+        Map mapFromDbByFilename = getOneByOwnerAndFilename(owner, map.getFilename());
+        Map mapFromDbByFileIdAndFilename = getOneByOwnerAndFileIdAndFilename(owner, map.getFileId(), map.getFilename());
+        int occupiedSlots = mapRepo.countByOwnerAndFileId(owner, map.getFileId());
+
+        if (mapFromDbByFileIdAndFilename == null && occupiedSlots == owner.getMemorySlotsNum()) {
             throw new BadRequestException("Map cannot be stored. You are out of memory slots for this map.");
         }
-
-        Map mapFromDbByFilename = getOneByOwnerAndFilename(owner, map.getFilename());
 
         if (mapFromDbByFilename == null) {
             map.setOwner(owner);
             create(map);
         } else {
-
             if (map.getFileId().equals(mapFromDbByFilename.getFileId())) {
                 update(owner, mapFromDbByFilename, map);
             } else {

@@ -18,6 +18,8 @@ public interface MapServiceInterface {
 
     Map getOneByOwnerAndFilename(User owner, String filename);
 
+    Map getOneByOwnerAndFileIdAndFilename(User owner, String fileId, String filename);
+
     Map update(User owner, Map oldMap, Map newMap);
 
     String delete(User owner, long id);

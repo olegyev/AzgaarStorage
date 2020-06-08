@@ -16,7 +16,7 @@ public class UploadDto extends AbstractDto {
     private String ownerName;
 
     @NonNull
-    private String fileName;
+    private String filename;
 
     @NonNull
     private URI downloadLink;

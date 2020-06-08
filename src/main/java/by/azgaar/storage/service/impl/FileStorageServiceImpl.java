@@ -59,7 +59,7 @@ public class FileStorageServiceImpl implements FileStorageServiceInterface {
     public String putS3Map(User owner, MultipartFile file, Map map) {
         String filename = StringUtils.cleanPath(file.getOriginalFilename());
 
-        try {
+        //try {
             if (!isValid(filename)) {
                 throw new FileStorageException("Filename contains invalid path sequence " + filename + ".");
             } else if (!bodyIsOk(map)) {
@@ -73,12 +73,12 @@ public class FileStorageServiceImpl implements FileStorageServiceInterface {
             fileData.setContentType(file.getContentType());
             fileData.setContentLength(file.getSize());
 
-            s3Client.putObject(bucket, (owner.getId() + "/" + filename), file.getInputStream(), fileData);
+            // s3Client.putObject(bucket, (owner.getId() + "/" + filename), file.getInputStream(), fileData);
 
             return filename;
-        } catch (IOException e) {
+        /*} catch (IOException e) {
             throw new FileStorageException("Cannot store file " + filename + ". Please try again!");
-        }
+        }*/
     }
 
     @Override

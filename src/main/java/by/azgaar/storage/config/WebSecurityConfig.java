@@ -27,8 +27,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
             /* Swagger */
             "/swagger-resources/**",
             "/swagger-ui.html",
-            "/v2/api-docs",
-            "/webjars/**"
+            "/v2/api-docs"
     };
 
     private final CrossDomainCsrfTokenRepo csrfTokenRepository;
@@ -50,14 +49,15 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                         .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
                 )
                 .logout(l -> l
-                        .logoutSuccessUrl("/")
                         .invalidateHttpSession(true)
                         .clearAuthentication(true)
-                        .deleteCookies("JSESSIONID", "XSRF-TOKEN").permitAll()
+                        .deleteCookies("JSESSIONID", "XSRF-TOKEN")
+                        .logoutSuccessUrl("/").permitAll()
+                )
+                .csrf(c -> c
+                        .csrfTokenRepository(csrfTokenRepository)
                 )
                 .cors()
-                .and()
-                .csrf().csrfTokenRepository(csrfTokenRepository)
                 .and()
                 .oauth2Login();
     }
