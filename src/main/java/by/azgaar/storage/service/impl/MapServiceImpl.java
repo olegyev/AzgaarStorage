@@ -97,7 +97,7 @@ public class MapServiceImpl implements MapServiceInterface {
 
     @Override
     @Transactional
-    public void saveMapData(User owner, Map map) {
+    public int saveMapData(User owner, Map map) {
         Map mapFromDbByFilename = getOneByOwnerAndFilename(owner, map.getFilename());
         Map mapFromDbByFileIdAndFilename = getOneByOwnerAndFileIdAndFilename(owner, map.getFileId(), map.getFilename());
         int occupiedSlots = mapRepo.countByOwnerAndFileId(owner, map.getFileId());
@@ -109,6 +109,7 @@ public class MapServiceImpl implements MapServiceInterface {
         if (mapFromDbByFilename == null) {
             map.setOwner(owner);
             create(map);
+            occupiedSlots++;
         } else {
             if (map.getFileId().equals(mapFromDbByFilename.getFileId())) {
                 update(owner, mapFromDbByFilename, map);
@@ -116,8 +117,12 @@ public class MapServiceImpl implements MapServiceInterface {
                 map.setOwner(owner);
                 map.setFilename(map.getFilename() + "-" + (mapRepo.countByOwnerAndFilename(owner, map.getFilename()) + 1));
                 create(map);
+                occupiedSlots++;
             }
         }
+
+        int freeSlots = owner.getMemorySlotsNum() - occupiedSlots;
+        return freeSlots;
     }
 
     private boolean sameFilenameIsInDb(User owner, String newFilename, long id) {

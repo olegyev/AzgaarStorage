@@ -56,7 +56,7 @@ public class FileStorageServiceImpl implements FileStorageServiceInterface {
     }
 
     @Override
-    public String putS3Map(User owner, MultipartFile file, Map map) {
+    public int putS3Map(User owner, MultipartFile file, Map map) {
         String filename = StringUtils.cleanPath(file.getOriginalFilename());
 
         //try {
@@ -66,16 +66,15 @@ public class FileStorageServiceImpl implements FileStorageServiceInterface {
                 throw new BadRequestException("Map data does not contain all required fields.");
             }
 
-            mapService.saveMapData(owner, map);
-            filename = map.getFilename();
+            int freeSlots = mapService.saveMapData(owner, map);
 
             ObjectMetadata fileData = new ObjectMetadata();
             fileData.setContentType(file.getContentType());
             fileData.setContentLength(file.getSize());
 
-            // s3Client.putObject(bucket, (owner.getId() + "/" + filename), file.getInputStream(), fileData);
+            // s3Client.putObject(bucket, (owner.getId() + "/" + map.getFilename()), file.getInputStream(), fileData);
 
-            return filename;
+            return freeSlots;
         /*} catch (IOException e) {
             throw new FileStorageException("Cannot store file " + filename + ". Please try again!");
         }*/

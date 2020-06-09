@@ -41,9 +41,9 @@ public class FileController {
                                                @RequestPart("file") MultipartFile file,
                                                @RequestPart("map") Map map) {
         User owner = userService.retrieveUser(principal);
-        String filename = fileStorageService.putS3Map(owner, file, map);
-        URI downloadPath = ServletUriComponentsBuilder.fromCurrentContextPath().path("/download/" + filename).build().toUri();
-        UploadDto dto = new UploadDto(owner.getName(), filename, downloadPath, file.getContentType(), file.getSize());
+        int freeSlots = fileStorageService.putS3Map(owner, file, map);
+        URI downloadPath = ServletUriComponentsBuilder.fromCurrentContextPath().path("/download/" + map.getFilename()).build().toUri();
+        UploadDto dto = new UploadDto(owner.getName(), map.getFilename(), downloadPath, file.getContentType(), file.getSize(), freeSlots);
         return new ResponseEntity<>(dto, HttpStatus.CREATED);
     }
 

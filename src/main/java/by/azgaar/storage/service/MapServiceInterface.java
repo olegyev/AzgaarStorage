@@ -24,6 +24,6 @@ public interface MapServiceInterface {
 
     String delete(User owner, long id);
 
-    void saveMapData(User owner, Map map);
+    int saveMapData(User owner, Map map);
 
 }

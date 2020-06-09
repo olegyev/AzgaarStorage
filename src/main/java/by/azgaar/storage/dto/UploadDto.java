@@ -27,4 +27,7 @@ public class UploadDto extends AbstractDto {
     @NonNull
     private long size;
 
+    @NonNull
+    private int freeSlots;
+
 }
