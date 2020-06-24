@@ -15,6 +15,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Calendar;
+
 @Service
 public class MapServiceImpl implements MapServiceInterface {
 
@@ -28,10 +30,9 @@ public class MapServiceImpl implements MapServiceInterface {
     @Override
     @Transactional
     public Map create(Map map) {
-        if (!bodyIsOk(map)) {
+        if (!dbBodyIsOk(map)) {
             throw new BadRequestException("Map data does not contain all required fields.");
         }
-
         return mapRepo.save(map);
     }
 
@@ -76,13 +77,16 @@ public class MapServiceImpl implements MapServiceInterface {
     @Override
     @Transactional
     public Map update(User owner, Map oldMap, Map newMap) {
-        if (sameFilenameIsInDb(owner, newMap.getFilename(), oldMap.getId())) {
-            throw new BadRequestException("There is another map with the same filename in DB for logged user.");
-        } else if (!bodyIsOk(newMap)) {
+        if (!clientBodyIsOk(newMap)) {
+            throw new BadRequestException("Map data from client should contain file ID, filename and version." +
+                    " Owner and update date are set on the server.");
+        } else if (!dbBodyIsOk(oldMap)) {
             throw new BadRequestException("Map data does not contain all required fields.");
+        } else if (sameFilenameIsInDb(owner, newMap.getFilename(), oldMap.getId())) {
+            throw new BadRequestException("There is another map with the same filename in DB for logged user.");
         }
 
-        BeanUtils.copyProperties(newMap, oldMap, "id", "owner", "fileId");
+        BeanUtils.copyProperties(newMap, oldMap, "id", "owner", "fileId", "updated");
 
         return oldMap;
     }
@@ -102,19 +106,25 @@ public class MapServiceImpl implements MapServiceInterface {
         Map mapFromDbByFileIdAndFilename = getOneByOwnerAndFileIdAndFilename(owner, map.getFileId(), map.getFilename());
         int occupiedSlots = mapRepo.countByOwnerAndFileId(owner, map.getFileId());
 
-        if (mapFromDbByFileIdAndFilename == null && occupiedSlots == owner.getMemorySlotsNum()) {
+        if (!clientBodyIsOk(map)) {
+            throw new BadRequestException("Map data should contain file ID, filename and version." +
+                    " Owner and update date are set on the server.");
+        } else if (mapFromDbByFileIdAndFilename == null && occupiedSlots == owner.getMemorySlotsNum()) {
             throw new BadRequestException("Map cannot be stored. You are out of memory slots for this map.");
         }
 
         if (mapFromDbByFilename == null) {
             map.setOwner(owner);
+            map.setUpdated(Calendar.getInstance());
             create(map);
             occupiedSlots++;
         } else {
             if (map.getFileId().equals(mapFromDbByFilename.getFileId())) {
+                mapFromDbByFilename.setUpdated(Calendar.getInstance());
                 update(owner, mapFromDbByFilename, map);
             } else {
                 map.setOwner(owner);
+                map.setUpdated(Calendar.getInstance());
                 map.setFilename(map.getFilename() + "-" + (mapRepo.countByOwnerAndFilename(owner, map.getFilename()) + 1));
                 create(map);
                 occupiedSlots++;
@@ -130,10 +140,19 @@ public class MapServiceImpl implements MapServiceInterface {
         return foundMap != null && foundMap.getId() != id;
     }
 
-    private boolean bodyIsOk(Map body) {
-        return body.getFileId() != null &&
+    private boolean dbBodyIsOk(Map body) {
+        return body.getOwner() != null &&
+                body.getFileId() != null &&
                 body.getFilename() != null &&
                 body.getUpdated() != null &&
+                body.getVersion() != null;
+    }
+
+    private boolean clientBodyIsOk(Map body) {
+        return body.getOwner() == null &&
+                body.getUpdated() == null &&
+                body.getFileId() != null &&
+                body.getFilename() != null &&
                 body.getVersion() != null;
     }
 

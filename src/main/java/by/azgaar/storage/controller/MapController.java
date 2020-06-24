@@ -62,11 +62,11 @@ public class MapController {
         User owner = userService.retrieveUser(principal);
         Map map = mapService.getOneByOwner(owner, id);
         MapDto dto = assembler.toModel(map);
+        System.out.println(dto.getUpdated().getTime());
         return ResponseEntity.ok(dto);
     }
 
     @PutMapping("{id}")
-    //@CrossOrigin(methods = {RequestMethod.OPTIONS, RequestMethod.PUT})
     public ResponseEntity<MapDto> update(@AuthenticationPrincipal OAuth2User principal,
                                          @PathVariable long id,
                                          @Valid @RequestBody Map newMap) {
@@ -74,10 +74,10 @@ public class MapController {
         Map oldMap = mapService.getOneByOwner(owner, id);
         String oldMapFilename = oldMap.getFilename();
         Map updatedMap = mapService.update(owner, oldMap, newMap);
-        fileStorageService.updateS3Map(
+        /*fileStorageService.updateS3Map(
                 owner.getId() + "/" + oldMapFilename,
                 owner.getId() + "/" + updatedMap.getFilename()
-        );
+        );*/
         MapDto dto = assembler.toModel(updatedMap);
         return new ResponseEntity<>(dto, HttpStatus.CREATED);
     }

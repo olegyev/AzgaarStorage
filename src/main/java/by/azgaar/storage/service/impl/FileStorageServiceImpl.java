@@ -62,8 +62,6 @@ public class FileStorageServiceImpl implements FileStorageServiceInterface {
         //try {
             if (!isValid(filename)) {
                 throw new FileStorageException("Filename contains invalid path sequence " + filename + ".");
-            } else if (!bodyIsOk(map)) {
-                throw new BadRequestException("Map data does not contain all required fields.");
             }
 
             int freeSlots = mapService.saveMapData(owner, map);
@@ -107,13 +105,6 @@ public class FileStorageServiceImpl implements FileStorageServiceInterface {
 
     private boolean isValid(String filename) {
         return filename.matches("[-_A-Za-z0-9 ]+");
-    }
-
-    private boolean bodyIsOk(Map body) {
-        return body.getFileId() != null &&
-                body.getFilename() != null &&
-                body.getUpdated() != null &&
-                body.getVersion() != null;
     }
 
 }

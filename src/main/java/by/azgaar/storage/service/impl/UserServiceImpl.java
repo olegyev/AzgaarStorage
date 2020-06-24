@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Calendar;
+import java.util.TimeZone;
 
 @Service
 public class UserServiceImpl implements UserServiceInterface {
@@ -28,7 +29,7 @@ public class UserServiceImpl implements UserServiceInterface {
                 principal.getAttribute("sub") :
                 principal.getAttribute("id").toString();
         User user = userRepo.findById(id).orElseGet(() -> instantiateUser(id, principal));
-        user.setLastVisit(Calendar.getInstance());
+        user.setLastVisit(Calendar.getInstance(TimeZone.getTimeZone("UTC")));
         return userRepo.save(user);
     }
 
@@ -37,7 +38,7 @@ public class UserServiceImpl implements UserServiceInterface {
         user.setId(id);
         user.setName(principal.getAttribute("name"));
         user.setEmail(principal.getAttribute("email"));
-        user.setFirstVisit(Calendar.getInstance());
+        user.setFirstVisit(Calendar.getInstance(TimeZone.getTimeZone("UTC")));
         return user;
     }
 

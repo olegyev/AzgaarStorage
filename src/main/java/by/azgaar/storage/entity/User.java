@@ -32,9 +32,11 @@ public class User extends AzgaarStorageEntity {
     private int memorySlotsNum = 3;
 
     @Column(nullable = false)
+    @Temporal(TemporalType.TIMESTAMP)
     private Calendar firstVisit;
 
     @Column(nullable = false)
+    @Temporal(TemporalType.TIMESTAMP)
     private Calendar lastVisit;
 
     @EqualsAndHashCode.Exclude
