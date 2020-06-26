@@ -49,9 +49,10 @@ public class MapController {
 
     @GetMapping
     public ResponseEntity<PagedModel<MapDto>> getAll(@AuthenticationPrincipal OAuth2User principal,
+                                                     @RequestParam(required = false) String filename,
                                                      @PageableDefault(sort = {"updated"}, direction = Sort.Direction.DESC) Pageable defaultPageable) {
         User owner = userService.retrieveUser(principal);
-        Page<Map> maps = mapService.getAllByOwner(owner, defaultPageable);
+        Page<Map> maps = mapService.getAllByOwner(owner, filename, defaultPageable);
         PagedModel<MapDto> dto = pagedResourcesAssembler.toModel(maps, assembler);
         return ResponseEntity.ok(dto);
     }
@@ -74,10 +75,10 @@ public class MapController {
         Map oldMap = mapService.getOneByOwner(owner, id);
         String oldMapFilename = oldMap.getFilename();
         Map updatedMap = mapService.update(owner, oldMap, newMap);
-        /*fileStorageService.updateS3Map(
+        fileStorageService.updateS3Map(
                 owner.getId() + "/" + oldMapFilename,
                 owner.getId() + "/" + updatedMap.getFilename()
-        );*/
+        );
         MapDto dto = assembler.toModel(updatedMap);
         return new ResponseEntity<>(dto, HttpStatus.CREATED);
     }

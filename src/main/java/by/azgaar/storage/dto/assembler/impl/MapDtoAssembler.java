@@ -37,7 +37,7 @@ public class MapDtoAssembler
         dto.setDownloadLink(downloadPath);
 
         dto.add(linkTo(methodOn(MapController.class)
-                .getAll(null, null))
+                .getAll(null, null, null))
                 .withRel("maps"));
 
         return dto;

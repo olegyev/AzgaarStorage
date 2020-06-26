@@ -12,10 +12,7 @@ import by.azgaar.storage.service.MapServiceInterface;
 import com.amazonaws.SdkClientException;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
-import com.amazonaws.services.s3.model.ObjectMetadata;
-import com.amazonaws.services.s3.model.PublicAccessBlockConfiguration;
-import com.amazonaws.services.s3.model.S3Object;
-import com.amazonaws.services.s3.model.SetPublicAccessBlockRequest;
+import com.amazonaws.services.s3.model.*;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -41,7 +38,7 @@ public class FileStorageServiceImpl implements FileStorageServiceInterface {
         try {
             this.bucket = s3Client.doesBucketExistV2(bucket) ? bucket : s3Client.createBucket(bucket).getName();
         } catch (SdkClientException e) {
-            throw new FileStorageException("Cannot create AWS S3 bucket where the uploaded files will be stored.");
+            throw new FileStorageException("Cannot create AWS S3 bucket where the uploaded files will be stored");
         }
 
         s3Client.setPublicAccessBlock(new SetPublicAccessBlockRequest()
@@ -59,9 +56,9 @@ public class FileStorageServiceImpl implements FileStorageServiceInterface {
     public int putS3Map(User owner, MultipartFile file, Map map) {
         String filename = StringUtils.cleanPath(file.getOriginalFilename());
 
-        //try {
+        try {
             if (!isValid(filename)) {
-                throw new FileStorageException("Filename contains invalid path sequence " + filename + ".");
+                throw new FileStorageException("Filename contains invalid path sequence " + filename);
             }
 
             int freeSlots = mapService.saveMapData(owner, map);
@@ -70,12 +67,12 @@ public class FileStorageServiceImpl implements FileStorageServiceInterface {
             fileData.setContentType(file.getContentType());
             fileData.setContentLength(file.getSize());
 
-            // s3Client.putObject(bucket, (owner.getId() + "/" + map.getFilename()), file.getInputStream(), fileData);
+            s3Client.putObject(bucket, (owner.getId() + "/" + map.getFilename()), file.getInputStream(), fileData);
 
             return freeSlots;
-        /*} catch (IOException e) {
+        } catch (IOException e) {
             throw new FileStorageException("Cannot store file " + filename + ". Please try again!");
-        }*/
+        }
     }
 
     @Override
@@ -83,10 +80,14 @@ public class FileStorageServiceImpl implements FileStorageServiceInterface {
         Map mapToDownload = mapService.getOneByOwnerAndFilename(owner, filename);
 
         if (mapToDownload == null) {
-            throw new NotFoundException("Map is not found.");
+            throw new NotFoundException("Map is not found");
         }
 
-        return s3Client.getObject(bucket, owner.getId() + "/" + filename);
+        try {
+            return s3Client.getObject(bucket, owner.getId() + "/" + filename);
+        } catch (AmazonS3Exception e) {
+            throw new BadRequestException("No such map in the cloud storage found!");
+        }
     }
 
     @Override

@@ -6,12 +6,14 @@ import by.azgaar.storage.exception.AccessDeniedException;
 import by.azgaar.storage.exception.BadRequestException;
 import by.azgaar.storage.exception.NotFoundException;
 import by.azgaar.storage.repo.MapRepo;
+import by.azgaar.storage.repo.specs.MapJpaSpecification;
 import by.azgaar.storage.service.MapServiceInterface;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,15 +33,18 @@ public class MapServiceImpl implements MapServiceInterface {
     @Transactional
     public Map create(Map map) {
         if (!dbBodyIsOk(map)) {
-            throw new BadRequestException("Map data does not contain all required fields.");
+            throw new BadRequestException("Map data does not contain all required fields");
         }
         return mapRepo.save(map);
     }
 
     @Override
     @Transactional
-    public Page<Map> getAllByOwner(User owner, Pageable pageable) {
-        return mapRepo.findAllByOwner(owner, pageable);
+    public Page<Map> getAllByOwner(User owner, String filename, Pageable pageable) {
+        Specification<Map> spec = Specification
+                .where(MapJpaSpecification.userIdContains(owner.getId()))
+                .and(filename == null ? null : MapJpaSpecification.filenameContains(filename));
+        return mapRepo.findAll(spec, pageable);
     }
 
     @Override
@@ -54,7 +59,7 @@ public class MapServiceImpl implements MapServiceInterface {
         Map map = getOneById(id);
 
         if (map == null) {
-            throw new NotFoundException("Map is not found.");
+            throw new NotFoundException("Map is not found");
         } else if (!map.getOwner().equals(owner)) {
             throw new AccessDeniedException("Access denied!");
         }
@@ -79,11 +84,11 @@ public class MapServiceImpl implements MapServiceInterface {
     public Map update(User owner, Map oldMap, Map newMap) {
         if (!clientBodyIsOk(newMap)) {
             throw new BadRequestException("Map data from client should contain file ID, filename and version." +
-                    " Owner and update date are set on the server.");
+                    " Owner and update date are set on the server");
         } else if (!dbBodyIsOk(oldMap)) {
-            throw new BadRequestException("Map data does not contain all required fields.");
+            throw new BadRequestException("Map data does not contain all required fields");
         } else if (sameFilenameIsInDb(owner, newMap.getFilename(), oldMap.getId())) {
-            throw new BadRequestException("There is another map with the same filename in DB for logged user.");
+            throw new BadRequestException("There is another map with the same filename");
         }
 
         BeanUtils.copyProperties(newMap, oldMap, "id", "owner", "fileId", "updated");
@@ -108,9 +113,9 @@ public class MapServiceImpl implements MapServiceInterface {
 
         if (!clientBodyIsOk(map)) {
             throw new BadRequestException("Map data should contain file ID, filename and version." +
-                    " Owner and update date are set on the server.");
+                    " Owner and update date are set on the server");
         } else if (mapFromDbByFileIdAndFilename == null && occupiedSlots == owner.getMemorySlotsNum()) {
-            throw new BadRequestException("Map cannot be stored. You are out of memory slots for this map.");
+            throw new BadRequestException("Map cannot be stored. You are out of memory slots for this map");
         }
 
         if (mapFromDbByFilename == null) {

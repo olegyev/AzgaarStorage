@@ -10,7 +10,7 @@ public interface MapServiceInterface {
 
     Map create(Map map);
 
-    Page<Map> getAllByOwner(User owner, Pageable pageable);
+    Page<Map> getAllByOwner(User owner, String filename, Pageable pageable);
 
     Map getOneById(long id);
 
