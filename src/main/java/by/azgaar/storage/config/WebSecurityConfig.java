@@ -1,6 +1,6 @@
 package by.azgaar.storage.config;
 
-import by.azgaar.storage.security.CrossDomainCsrfTokenRepo;
+import static java.util.Arrays.asList;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -14,7 +14,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import static java.util.Arrays.asList;
+import by.azgaar.storage.security.CrossDomainCsrfTokenRepo;
 
 @Configuration
 @EnableWebSecurity
@@ -36,7 +36,6 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     public WebSecurityConfig(final CrossDomainCsrfTokenRepo csrfTokenRepository) {
         this.csrfTokenRepository = csrfTokenRepository;
     }
-
 
     @Override
     public void configure(HttpSecurity http) throws Exception {
@@ -70,7 +69,6 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         configuration.setAllowedMethods(asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(asList(CrossDomainCsrfTokenRepo.XSRF_HEADER_NAME, "Content-Type"));
         configuration.setExposedHeaders(asList(CrossDomainCsrfTokenRepo.XSRF_HEADER_NAME));
-        configuration.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;

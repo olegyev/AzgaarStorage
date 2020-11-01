@@ -41,10 +41,15 @@ public class CrossDomainCsrfTokenRepo implements CsrfTokenRepository {
 
     @Override
     public void saveToken(final CsrfToken token, final HttpServletRequest request, final HttpServletResponse response) {
-        if (token != null) {
+    	if (token != null) {
+    		response.setHeader("Set-Cookie", XSRF_TOKEN_COOKIE_NAME + "=" + token.getToken() + "; Path=/; Secure; HttpOnly; SameSite=None");
             response.addHeader(XSRF_HEADER_NAME, token.getToken());
             this.token = token;
-            delegate.saveToken(token, request, response);
+            /**
+             * Commented out to prevent adding additional default incorrect CSRF cookie (without Same-Site=None; Secure).
+             * Uncomment to add default CSRF cookie.
+             */
+            // delegate.saveToken(token, request, response);
         }
     }
 

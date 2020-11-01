@@ -1,9 +1,11 @@
-package by.azgaar.storage.security;
+package by.azgaar.storage.filters;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+
+import by.azgaar.storage.security.CrossDomainCsrfTokenRepo;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
