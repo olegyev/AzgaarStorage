@@ -65,7 +65,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowCredentials(true);
-        configuration.setAllowedOrigins(asList("null"));
+        configuration.setAllowedOrigins(asList("https://127.0.0.2:5500"));
         configuration.setAllowedMethods(asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(asList(CrossDomainCsrfTokenRepo.XSRF_HEADER_NAME, "Content-Type"));
         configuration.setExposedHeaders(asList(CrossDomainCsrfTokenRepo.XSRF_HEADER_NAME));
