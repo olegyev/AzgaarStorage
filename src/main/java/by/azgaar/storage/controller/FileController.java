@@ -61,5 +61,12 @@ public class FileController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
                 .body(new InputStreamResource(mapToDownload.getObjectContent()));
     }
+    
+    @GetMapping("/getShareLink/{filename:.+}")
+    public String getShareLink(@AuthenticationPrincipal OAuth2User principal,
+    										   @PathVariable String filename) {
+    	User owner = userService.retrieveUser(principal);
+    	return fileStorageService.generateShareLink(owner, filename);
+    }
 
 }

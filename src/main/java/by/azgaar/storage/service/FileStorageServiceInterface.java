@@ -16,5 +16,7 @@ public interface FileStorageServiceInterface {
     void updateS3Map(String oldFilename, String newFilename);
 
     void deleteS3Map(String filename);
+    
+    String generateShareLink(User owner, String filename);
 
 }

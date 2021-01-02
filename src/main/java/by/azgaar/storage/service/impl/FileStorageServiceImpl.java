@@ -18,12 +18,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 
 @Service
 public class FileStorageServiceImpl implements FileStorageServiceInterface {
 
+	private final FileStorageProperties fileStorageProperties;
     private final AmazonS3 s3Client;
     private final String bucket;
     private final MapServiceInterface mapService;
@@ -31,6 +35,8 @@ public class FileStorageServiceImpl implements FileStorageServiceInterface {
     @Autowired
     public FileStorageServiceImpl(final FileStorageProperties fileStorageProperties,
                                   final MapServiceInterface mapService) {
+    	this.fileStorageProperties = fileStorageProperties;
+    	
         String bucket = fileStorageProperties.getS3Bucket();
 
         s3Client = AmazonS3ClientBuilder.standard().build();
@@ -44,10 +50,10 @@ public class FileStorageServiceImpl implements FileStorageServiceInterface {
         s3Client.setPublicAccessBlock(new SetPublicAccessBlockRequest()
                 .withBucketName(bucket)
                 .withPublicAccessBlockConfiguration(new PublicAccessBlockConfiguration()
-                        .withBlockPublicAcls(true)
-                        .withIgnorePublicAcls(true)
-                        .withBlockPublicPolicy(true)
-                        .withRestrictPublicBuckets(true)));
+                        .withBlockPublicAcls(false)
+                        .withIgnorePublicAcls(false)
+                        .withBlockPublicPolicy(false)
+                        .withRestrictPublicBuckets(false)));
 
         this.mapService = mapService;
     }
@@ -55,19 +61,24 @@ public class FileStorageServiceImpl implements FileStorageServiceInterface {
     @Override
     public int putS3Map(User owner, MultipartFile file, Map map) {
         String filename = StringUtils.cleanPath(file.getOriginalFilename());
+        String key = "";
 
         try {
             if (!isValid(filename)) {
                 throw new FileStorageException("Filename contains invalid path sequence " + filename);
             }
+            
+            key = owner.getId() + "/" + map.getFilename();
 
             int freeSlots = mapService.saveMapData(owner, map);
 
             ObjectMetadata fileData = new ObjectMetadata();
             fileData.setContentType(file.getContentType());
             fileData.setContentLength(file.getSize());
-
-            s3Client.putObject(bucket, (owner.getId() + "/" + map.getFilename()), file.getInputStream(), fileData);
+            
+            PutObjectRequest putObjectRequest = new PutObjectRequest(bucket, key, file.getInputStream(), fileData);
+            putObjectRequest.setCannedAcl(CannedAccessControlList.PublicRead);
+            s3Client.putObject(putObjectRequest);
 
             return freeSlots;
         } catch (IOException e) {
@@ -102,6 +113,16 @@ public class FileStorageServiceImpl implements FileStorageServiceInterface {
     @Override
     public void deleteS3Map(String filename) {
         s3Client.deleteObject(bucket, filename);
+    }
+    
+    @Override
+    public String generateShareLink(User owner, String filename) {
+    	final String s3Url = fileStorageProperties.getS3Url();
+    	return UriComponentsBuilder
+    			.fromHttpUrl(s3Url)
+    			.path(owner.getId() + "/" + filename)
+				.build()
+				.toUriString();
     }
 
     private boolean isValid(String filename) {

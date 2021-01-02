@@ -10,6 +10,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @Setter
 public class FileStorageProperties {
 
+	private String s3Url;
     private String s3Bucket;
 
 }

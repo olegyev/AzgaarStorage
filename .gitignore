@@ -34,5 +34,24 @@ out/
 *.ipr
 *.iws
 
+##############################
+## Eclipse
+##############################
+.project
+.metadata
+bin/**
+tmp/**
+tmp/**/*
+Scripts/**
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+.classpath
+.dbeaver/
+.settings/
+.loadpath
+
 logs
 HELP.md
