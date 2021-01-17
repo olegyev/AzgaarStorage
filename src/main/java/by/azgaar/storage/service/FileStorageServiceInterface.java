@@ -9,7 +9,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 public interface FileStorageServiceInterface {
 
-    int putS3Map(User owner, MultipartFile file, Map map);
+	int putS3Map(User owner, MultipartFile file, Map map);
 
     S3Object getS3Map(User owner, String filename);
 

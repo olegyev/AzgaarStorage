@@ -1,24 +1,24 @@
 package by.azgaar.storage.repo.specs;
 
-import by.azgaar.storage.entity.Map;
-import by.azgaar.storage.entity.User;
+import java.text.MessageFormat;
 
 import org.springframework.data.jpa.domain.Specification;
 
-import java.text.MessageFormat;
+import by.azgaar.storage.entity.Map;
+import by.azgaar.storage.entity.User;
 
 public final class MapJpaSpecification {
 
-    public static Specification<Map> userIdContains(String ownerId) {
-        return (root, query, builder) -> builder.like(root.<Map, User>join("owner").get("id"), contains(ownerId));
-    }
+	public static Specification<Map> userIdEqualsTo(long ownerId) {
+		return (root, query, builder) -> builder.equal(root.<Map, User>join("owner").get("id"), ownerId);
+	}
 
-    public static Specification<Map> filenameContains(String filename) {
-        return (root, query, builder) -> builder.like(root.get("filename"), contains(filename));
-    }
+	public static Specification<Map> filenameContains(String filename) {
+		return (root, query, builder) -> builder.like(root.get("filename"), contains(filename));
+	}
 
-    private static String contains(String expression) {
-        return MessageFormat.format("%{0}%", expression);
-    }
+	private static String contains(String expression) {
+		return MessageFormat.format("%{0}%", expression);
+	}
 
 }

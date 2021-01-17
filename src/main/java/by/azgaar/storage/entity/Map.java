@@ -1,15 +1,18 @@
 package by.azgaar.storage.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import java.util.Calendar;
 
-import lombok.AccessLevel;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.Setter;
-
-import javax.persistence.*;
-
-import java.util.Calendar;
 
 @Entity
 @Table(name = "maps")
@@ -17,27 +20,21 @@ import java.util.Calendar;
 @EqualsAndHashCode(callSuper = false)
 public class Map extends AzgaarStorageEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Setter(AccessLevel.NONE)
-    @JsonIgnore
-    private long id;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false)
+	private User owner;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false)
-    private User owner;
+	@Column(nullable = false)
+	private String fileId;
 
-    @Column(nullable = false)
-    private String fileId;
+	@Column(nullable = false)
+	private String filename;
 
-    @Column(nullable = false)
-    private String filename;
+	@Column(nullable = false)
+	@Temporal(TemporalType.TIMESTAMP)
+	private Calendar updated;
 
-    @Column(nullable = false)
-    @Temporal(TemporalType.TIMESTAMP)
-    private Calendar updated;
-
-    @Column(nullable = false)
-    private String version;
+	@Column(nullable = false)
+	private String version;
 
 }

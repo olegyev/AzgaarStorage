@@ -21,8 +21,6 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
 
 @Service
 public class FileStorageServiceImpl implements FileStorageServiceInterface {
@@ -68,7 +66,7 @@ public class FileStorageServiceImpl implements FileStorageServiceInterface {
                 throw new FileStorageException("Filename contains invalid path sequence " + filename);
             }
             
-            key = owner.getId() + "/" + map.getFilename();
+            key = owner.getS3Key() + "/" + map.getFilename();
 
             int freeSlots = mapService.saveMapData(owner, map);
 
@@ -95,7 +93,7 @@ public class FileStorageServiceImpl implements FileStorageServiceInterface {
         }
 
         try {
-            return s3Client.getObject(bucket, owner.getId() + "/" + filename);
+            return s3Client.getObject(bucket, owner.getS3Key() + "/" + filename);
         } catch (AmazonS3Exception e) {
             throw new BadRequestException("No such map in the cloud storage found!");
         }
@@ -103,10 +101,9 @@ public class FileStorageServiceImpl implements FileStorageServiceInterface {
 
     @Override
     public void updateS3Map(String oldFilename, String newFilename) {
-        s3Client.copyObject(
-                bucket, oldFilename,
-                bucket, newFilename
-        );
+    	CopyObjectRequest copyObjectRequest = new CopyObjectRequest(bucket, oldFilename, bucket, newFilename);
+    	copyObjectRequest.setCannedAccessControlList(CannedAccessControlList.PublicRead);
+    	s3Client.copyObject(copyObjectRequest);
         deleteS3Map(oldFilename);
     }
 
@@ -120,7 +117,7 @@ public class FileStorageServiceImpl implements FileStorageServiceInterface {
     	final String s3Url = fileStorageProperties.getS3Url();
     	return UriComponentsBuilder
     			.fromHttpUrl(s3Url)
-    			.path(owner.getId() + "/" + filename)
+    			.path(owner.getS3Key() + "/" + filename)
 				.build()
 				.toUriString();
     }

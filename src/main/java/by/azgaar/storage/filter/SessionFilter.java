@@ -1,4 +1,4 @@
-package by.azgaar.storage.filters;
+package by.azgaar.storage.filter;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.web.csrf.CsrfToken;

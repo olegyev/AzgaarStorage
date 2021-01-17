@@ -1,16 +1,20 @@
 package by.azgaar.storage.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.List;
+
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.OneToMany;
+import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
-
-import javax.persistence.*;
-
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.List;
 
 @Entity
 @Table(name = "users")
@@ -18,30 +22,31 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = false)
 public class User extends AzgaarStorageEntity {
 
-    @Id
-    @Column(nullable = false, unique = true)
-    @JsonIgnore
-    private String id;
+	@Column(name = "oauth2_id")
+	private String OAuth2Id;
 
-    @Column(nullable = false)
-    private String name;
+	@Column(nullable = false)
+	private String name;
 
-    private String email;
+	private String email;
 
-    @Column(nullable = false)
-    private int memorySlotsNum = 3;
+	@Column(nullable = false)
+	private int memorySlotsNum = 3;
 
-    @Column(nullable = false)
-    @Temporal(TemporalType.TIMESTAMP)
-    private Calendar firstVisit;
+	@Column(name = "s3_key", nullable = false)
+	private String s3Key;
 
-    @Column(nullable = false)
-    @Temporal(TemporalType.TIMESTAMP)
-    private Calendar lastVisit;
+	@Column(nullable = false)
+	@Temporal(TemporalType.TIMESTAMP)
+	private Calendar firstVisit;
 
-    @EqualsAndHashCode.Exclude
-    @ToString.Exclude
-    @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Map> maps = new ArrayList<>(0);
+	@Column(nullable = false)
+	@Temporal(TemporalType.TIMESTAMP)
+	private Calendar lastVisit;
+
+	@EqualsAndHashCode.Exclude
+	@ToString.Exclude
+	@OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<Map> maps = new ArrayList<>(0);
 
 }
