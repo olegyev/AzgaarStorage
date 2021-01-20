@@ -14,12 +14,14 @@ public interface MapServiceInterface {
 
     Map getOneById(long id);
 
-    Map getOneByOwner(User owner, long id);
+    Map getOneByOwner(final User owner, final long id);
 
-    Map getOneByOwnerAndFilename(User owner, String filename);
+    Map getOneByOwnerAndFilename(final User owner, final String filename);
 
-    Map getOneByOwnerAndFileIdAndFilename(User owner, String fileId, String filename);
+    Map getOneByOwnerAndFileIdAndFilename(final User owner, final String fileId, final String filename);
 
+    int countByOwner(final User owner);
+    
     Map update(User owner, Map oldMap, Map newMap);
 
     String delete(User owner, long id);

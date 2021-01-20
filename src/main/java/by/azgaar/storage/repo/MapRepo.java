@@ -13,8 +13,8 @@ public interface MapRepo extends JpaRepository<Map, Long>, JpaSpecificationExecu
 
     Map findByOwnerAndFileIdAndFilename(User owner, String fileId, String filename);
 
-    @Query("SELECT COUNT (id) FROM Map WHERE owner = :owner AND fileId LIKE %:fileId%")
-    int countByOwnerAndFileId(User owner, String fileId);
+    @Query("SELECT COUNT (id) FROM Map WHERE owner = :owner")
+    int countByOwner(User owner);
 
     @Query("SELECT COUNT (id) FROM Map WHERE owner = :owner AND filename LIKE %:filename%")
     int countByOwnerAndFilename(User owner, String filename);

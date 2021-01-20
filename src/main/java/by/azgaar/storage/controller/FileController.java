@@ -42,8 +42,8 @@ public class FileController {
                                                @RequestPart("map") Map map) {
         User owner = userService.retrieveUser(principal);
         int freeSlots = fileStorageService.putS3Map(owner, file, map);
-        URI downloadPath = ServletUriComponentsBuilder.fromCurrentContextPath().path("/download/" + map.getFilename()).build().toUri();
-        UploadDto dto = new UploadDto(owner.getName(), map.getFilename(), downloadPath, file.getContentType(), file.getSize(), freeSlots);
+        String shareLink = fileStorageService.generateShareLink(owner, map.getFilename());
+        UploadDto dto = new UploadDto(owner.getName(), map.getFilename(), shareLink, file.getContentType(), file.getSize(), freeSlots);
         return new ResponseEntity<>(dto, HttpStatus.CREATED);
     }
 
@@ -64,7 +64,7 @@ public class FileController {
     
     @GetMapping("/getShareLink/{filename:.+}")
     public String getShareLink(@AuthenticationPrincipal OAuth2User principal,
-    										   @PathVariable String filename) {
+    						   @PathVariable String filename) {
     	User owner = userService.retrieveUser(principal);
     	return fileStorageService.generateShareLink(owner, filename);
     }

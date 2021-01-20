@@ -41,8 +41,7 @@ public class MapServiceImpl implements MapServiceInterface {
 	@Override
 	@Transactional
 	public Page<Map> getAllByOwner(User owner, String filename, Pageable pageable) {
-		Specification<Map> spec = Specification
-				.where(MapJpaSpecification.userIdEqualsTo(owner.getId()))
+		Specification<Map> spec = Specification.where(MapJpaSpecification.userIdEqualsTo(owner.getId()))
 				.and(filename == null ? null : MapJpaSpecification.filenameContains(filename));
 		return mapRepo.findAll(spec, pageable);
 	}
@@ -69,14 +68,20 @@ public class MapServiceImpl implements MapServiceInterface {
 
 	@Override
 	@Transactional
-	public Map getOneByOwnerAndFilename(User owner, String filename) {
+	public Map getOneByOwnerAndFilename(final User owner, final String filename) {
 		return mapRepo.findByOwnerAndFilename(owner, filename);
 	}
 
 	@Override
 	@Transactional
-	public Map getOneByOwnerAndFileIdAndFilename(User owner, String fileId, String filename) {
+	public Map getOneByOwnerAndFileIdAndFilename(final User owner, final String fileId, final String filename) {
 		return mapRepo.findByOwnerAndFileIdAndFilename(owner, fileId, filename);
+	}
+	
+	@Override
+	@Transactional
+	public int countByOwner(final User owner) {
+		return mapRepo.countByOwner(owner);
 	}
 
 	@Override
@@ -106,16 +111,17 @@ public class MapServiceImpl implements MapServiceInterface {
 
 	@Override
 	@Transactional
-	public int saveMapData(User owner, Map map) {
-		Map mapFromDbByFilename = getOneByOwnerAndFilename(owner, map.getFilename());
-		Map mapFromDbByFileIdAndFilename = getOneByOwnerAndFileIdAndFilename(owner, map.getFileId(), map.getFilename());
-		int occupiedSlots = mapRepo.countByOwnerAndFileId(owner, map.getFileId());
+	public int saveMapData(final User owner, final Map map) {
+		final Map mapFromDbByFilename = getOneByOwnerAndFilename(owner, map.getFilename());
+		final Map mapFromDbByFileIdAndFilename = getOneByOwnerAndFileIdAndFilename(owner, map.getFileId(), map.getFilename());
+		int occupiedSlots = countByOwner(owner);
 
 		if (!clientBodyIsOk(map)) {
-			throw new BadRequestException("Map data should contain file ID, filename and version."
-					+ " Owner and update date are set on the server");
-		} else if (mapFromDbByFileIdAndFilename == null && occupiedSlots == owner.getMemorySlotsNum()) {
-			throw new BadRequestException("Map cannot be stored. You are out of memory slots for this map");
+			throw new BadRequestException("Map data should contain file ID, filename, and version. Owner and update date are set on the server.");
+		}
+		
+		if (occupiedSlots == owner.getMemorySlotsNum() && mapFromDbByFileIdAndFilename == null) {
+			throw new BadRequestException("Map cannot be stored. You are out of memory slots.");
 		}
 
 		if (mapFromDbByFilename == null) {
@@ -130,8 +136,7 @@ public class MapServiceImpl implements MapServiceInterface {
 			} else {
 				map.setOwner(owner);
 				map.setUpdated(Calendar.getInstance());
-				map.setFilename(
-						map.getFilename() + "-" + (mapRepo.countByOwnerAndFilename(owner, map.getFilename()) + 1));
+				map.setFilename(map.getFilename() + "-" + (mapRepo.countByOwnerAndFilename(owner, map.getFilename()) + 1));
 				create(map);
 				occupiedSlots++;
 			}
