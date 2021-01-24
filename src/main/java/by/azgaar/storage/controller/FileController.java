@@ -19,9 +19,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-
-import java.net.URI;
 
 @RestController
 public class FileController {
@@ -39,9 +36,10 @@ public class FileController {
     @PostMapping("/upload")
     public ResponseEntity<UploadDto> uploadMap(@AuthenticationPrincipal OAuth2User principal,
                                                @RequestPart("file") MultipartFile file,
-                                               @RequestPart("map") Map map) {
+                                               @RequestPart("map") Map map,
+                                               @RequestParam("isQuickSave") boolean isQuickSave) {
         User owner = userService.retrieveUser(principal);
-        int freeSlots = fileStorageService.putS3Map(owner, file, map);
+        int freeSlots = fileStorageService.putS3Map(owner, file, map, isQuickSave);
         String shareLink = fileStorageService.generateShareLink(owner, map.getFilename());
         UploadDto dto = new UploadDto(owner.getName(), map.getFilename(), shareLink, file.getContentType(), file.getSize(), freeSlots);
         return new ResponseEntity<>(dto, HttpStatus.CREATED);

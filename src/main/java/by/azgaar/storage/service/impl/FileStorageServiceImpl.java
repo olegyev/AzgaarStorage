@@ -57,7 +57,7 @@ public class FileStorageServiceImpl implements FileStorageServiceInterface {
     }
 
     @Override
-    public int putS3Map(User owner, MultipartFile file, Map map) {
+    public int putS3Map(final User owner, final MultipartFile file, final Map map, final boolean isQuickSave) {
         String filename = StringUtils.cleanPath(file.getOriginalFilename());
         String key = "";
 
@@ -68,7 +68,7 @@ public class FileStorageServiceImpl implements FileStorageServiceInterface {
             
             key = owner.getS3Key() + "/" + map.getFilename();
 
-            int freeSlots = mapService.saveMapData(owner, map);
+            int freeSlots = mapService.saveMapData(owner, map, isQuickSave);
 
             ObjectMetadata fileData = new ObjectMetadata();
             fileData.setContentType(file.getContentType());

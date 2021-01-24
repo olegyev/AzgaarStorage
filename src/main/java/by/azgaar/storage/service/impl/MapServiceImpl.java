@@ -41,7 +41,8 @@ public class MapServiceImpl implements MapServiceInterface {
 	@Override
 	@Transactional
 	public Page<Map> getAllByOwner(User owner, String filename, Pageable pageable) {
-		Specification<Map> spec = Specification.where(MapJpaSpecification.userIdEqualsTo(owner.getId()))
+		Specification<Map> spec = Specification
+				.where(MapJpaSpecification.userIdEqualsTo(owner.getId()))
 				.and(filename == null ? null : MapJpaSpecification.filenameContains(filename));
 		return mapRepo.findAll(spec, pageable);
 	}
@@ -71,33 +72,57 @@ public class MapServiceImpl implements MapServiceInterface {
 	public Map getOneByOwnerAndFilename(final User owner, final String filename) {
 		return mapRepo.findByOwnerAndFilename(owner, filename);
 	}
-
-	@Override
-	@Transactional
-	public Map getOneByOwnerAndFileIdAndFilename(final User owner, final String fileId, final String filename) {
-		return mapRepo.findByOwnerAndFileIdAndFilename(owner, fileId, filename);
-	}
 	
 	@Override
 	@Transactional
 	public int countByOwner(final User owner) {
 		return mapRepo.countByOwner(owner);
 	}
+	
+	@Override
+	@Transactional
+	public int countByOwnerAndFilename(final User owner, final String filename) {
+		return mapRepo.countByOwnerAndFilename(owner, filename);
+	}
+	
+	@Override
+	@Transactional
+	public Map rename(final User owner, final Map oldMap, final Map newMap) {
+		newMap.setOwner(owner);
+		newMap.setUpdated(oldMap.getUpdated());
+		
+		if (!dbBodyIsOk(oldMap) || !dbBodyIsOk(newMap)) {
+			throw new BadRequestException("Map data does not contain all required fields.");
+		}
+		
+		if (sameFilenameIsInDb(owner, newMap.getFilename(), oldMap.getId())) {
+			throw new BadRequestException("There is another map with the same filename.");
+		}
+
+		BeanUtils.copyProperties(newMap, oldMap, "id", "owner", "fileId");
+		mapRepo.save(oldMap);
+		return oldMap;
+	}
 
 	@Override
 	@Transactional
-	public Map update(User owner, Map oldMap, Map newMap) {
-		if (!clientBodyIsOk(newMap)) {
-			throw new BadRequestException("Map data from client should contain file ID, filename and version."
-					+ " Owner and update date are set on the server");
-		} else if (!dbBodyIsOk(oldMap)) {
-			throw new BadRequestException("Map data does not contain all required fields");
-		} else if (sameFilenameIsInDb(owner, newMap.getFilename(), oldMap.getId())) {
-			throw new BadRequestException("There is another map with the same filename");
+	public Map updateFilename(final User owner, final Map oldMap, final Map newMap) {
+		if (!dbBodyIsOk(oldMap) || !dbBodyIsOk(newMap)) {
+			throw new BadRequestException("Map data does not contain all required fields.");
 		}
-
-		BeanUtils.copyProperties(newMap, oldMap, "id", "owner", "fileId", "updated");
-
+		BeanUtils.copyProperties(newMap, oldMap, "id", "owner", "fileId");
+		mapRepo.save(oldMap);
+		return oldMap;
+	}
+	
+	@Override
+	@Transactional
+	public Map updateFileId(final User owner, final Map oldMap, final Map newMap) {
+		if (!dbBodyIsOk(oldMap) || !dbBodyIsOk(newMap)) {
+			throw new BadRequestException("Map data does not contain all required fields.");
+		}
+		BeanUtils.copyProperties(newMap, oldMap, "id", "owner", "filename");
+		mapRepo.save(oldMap);
 		return oldMap;
 	}
 
@@ -111,34 +136,39 @@ public class MapServiceImpl implements MapServiceInterface {
 
 	@Override
 	@Transactional
-	public int saveMapData(final User owner, final Map map) {
+	public int saveMapData(final User owner, final Map map, final boolean isQuickSave) {
 		final Map mapFromDbByFilename = getOneByOwnerAndFilename(owner, map.getFilename());
-		final Map mapFromDbByFileIdAndFilename = getOneByOwnerAndFileIdAndFilename(owner, map.getFileId(), map.getFilename());
 		int occupiedSlots = countByOwner(owner);
-
-		if (!clientBodyIsOk(map)) {
-			throw new BadRequestException("Map data should contain file ID, filename, and version. Owner and update date are set on the server.");
-		}
+		final boolean userHasMemorySlots = occupiedSlots < owner.getMemorySlotsNum();
 		
-		if (occupiedSlots == owner.getMemorySlotsNum() && mapFromDbByFileIdAndFilename == null) {
+		if (!userHasMemorySlots && mapFromDbByFilename == null) {
 			throw new BadRequestException("Map cannot be stored. You are out of memory slots.");
 		}
+		
+		map.setOwner(owner);
+		map.setUpdated(Calendar.getInstance());
 
-		if (mapFromDbByFilename == null) {
-			map.setOwner(owner);
-			map.setUpdated(Calendar.getInstance());
+		if (mapFromDbByFilename == null && userHasMemorySlots) {
+			// Save brand new map
 			create(map);
 			occupiedSlots++;
 		} else {
-			if (map.getFileId().equals(mapFromDbByFilename.getFileId())) {
-				mapFromDbByFilename.setUpdated(Calendar.getInstance());
-				update(owner, mapFromDbByFilename, map);
+			if (mapFromDbByFilename != null && map.getFileId().equals(mapFromDbByFilename.getFileId())) {
+				// Rename or rewrite current existing map via "Save As" (not "Rename")
+				updateFilename(owner, mapFromDbByFilename, map);
+			} else if (mapFromDbByFilename != null && !isQuickSave) {
+				// Rewrite another existing map
+				updateFileId(owner, mapFromDbByFilename, map);
 			} else {
-				map.setOwner(owner);
-				map.setUpdated(Calendar.getInstance());
-				map.setFilename(map.getFilename() + "-" + (mapRepo.countByOwnerAndFilename(owner, map.getFilename()) + 1));
-				create(map);
-				occupiedSlots++;
+				if (userHasMemorySlots) {
+					// If collision occurred (map with the already stored filename was created and a user clicked Quick Save) - to prevent occasional rewriting
+					map.setFilename(map.getFilename() + "-" + (countByOwnerAndFilename(owner, map.getFilename()) + 1));
+					create(map);
+					occupiedSlots++;
+				} else {
+					// Collision occurred, but a user has no more memory slots - to prevent storing by the new file ID
+					throw new BadRequestException("Map cannot be stored. You are out of memory slots.");
+				}
 			}
 		}
 
@@ -152,13 +182,11 @@ public class MapServiceImpl implements MapServiceInterface {
 	}
 
 	private boolean dbBodyIsOk(Map body) {
-		return body.getOwner() != null && body.getFileId() != null && body.getFilename() != null
-				&& body.getUpdated() != null && body.getVersion() != null;
-	}
-
-	private boolean clientBodyIsOk(Map body) {
-		return body.getOwner() == null && body.getUpdated() == null && body.getFileId() != null
-				&& body.getFilename() != null && body.getVersion() != null;
+		return body.getOwner() != null &&
+				body.getFileId() != null &&
+				body.getFilename() != null &&
+				body.getUpdated() != null &&
+				body.getVersion() != null;
 	}
 
 }

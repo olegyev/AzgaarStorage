@@ -18,14 +18,18 @@ public interface MapServiceInterface {
 
     Map getOneByOwnerAndFilename(final User owner, final String filename);
 
-    Map getOneByOwnerAndFileIdAndFilename(final User owner, final String fileId, final String filename);
-
     int countByOwner(final User owner);
     
-    Map update(User owner, Map oldMap, Map newMap);
+    int countByOwnerAndFilename(final User owner, final String filename);
+    
+    Map rename(final User owner, final Map oldMap, final Map newMap);
+    
+    Map updateFilename(final User owner, final Map oldMap, final Map newMap);
+    
+    Map updateFileId(final User owner, final Map oldMap, final Map newMap);
 
     String delete(User owner, long id);
 
-    int saveMapData(User owner, Map map);
+    int saveMapData(final User owner, final Map map, final boolean isQuickSave);
 
 }

@@ -73,15 +73,15 @@ public class MapController {
 	}
 
 	@PutMapping("{id}")
-	public ResponseEntity<MapDto> update(@AuthenticationPrincipal OAuth2User principal, @PathVariable long id,
-			@Valid @RequestBody Map newMap) {
+	public ResponseEntity<MapDto> rename(@AuthenticationPrincipal OAuth2User principal,
+										 @PathVariable long id,
+										 @Valid @RequestBody Map newMap) {
 		User owner = userService.retrieveUser(principal);
 		Map oldMap = mapService.getOneByOwner(owner, id);
-		String oldMapFilename = oldMap.getFilename();
-		Map updatedMap = mapService.update(owner, oldMap, newMap);
-		fileStorageService.updateS3Map(owner.getS3Key() + "/" + oldMapFilename,
-				owner.getS3Key() + "/" + updatedMap.getFilename());
-		MapDto dto = assembler.toModel(updatedMap);
+		final String oldMapFilename = oldMap.getFilename();
+		Map renamedMap = mapService.rename(owner, oldMap, newMap);
+		fileStorageService.updateS3Map(owner.getS3Key() + "/" + oldMapFilename, owner.getS3Key() + "/" + renamedMap.getFilename());
+		MapDto dto = assembler.toModel(renamedMap);
 		return new ResponseEntity<>(dto, HttpStatus.CREATED);
 	}
 

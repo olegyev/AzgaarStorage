@@ -11,7 +11,7 @@ public interface MapRepo extends JpaRepository<Map, Long>, JpaSpecificationExecu
 
     Map findByOwnerAndFilename(User owner, String filename);
 
-    Map findByOwnerAndFileIdAndFilename(User owner, String fileId, String filename);
+    Map findByOwnerAndFileId(User owner, String fileId);
 
     @Query("SELECT COUNT (id) FROM Map WHERE owner = :owner")
     int countByOwner(User owner);
