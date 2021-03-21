@@ -36,5 +36,8 @@ public class Map extends AzgaarStorageEntity {
 
 	@Column(nullable = false)
 	private String version;
+	
+	@Column(nullable = false)
+	private String thumbnail;
 
 }
