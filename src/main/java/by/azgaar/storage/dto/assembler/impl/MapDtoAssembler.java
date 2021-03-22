@@ -35,6 +35,8 @@ public class MapDtoAssembler
 
         URI downloadPath = ServletUriComponentsBuilder.fromCurrentContextPath().path("/download/" + map.getFilename()).build().toUri();
         dto.setDownloadLink(downloadPath);
+        
+        dto.setThumbnail(map.getThumbnail());
 
         dto.add(linkTo(methodOn(MapController.class)
                 .getAll(null, null, null))

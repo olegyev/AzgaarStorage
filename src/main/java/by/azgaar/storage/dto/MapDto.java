@@ -24,5 +24,7 @@ public class MapDto extends AbstractDto {
     private String version;
 
     private URI downloadLink;
+    
+    private String thumbnail;
 
 }

@@ -99,7 +99,7 @@ public class MapServiceImpl implements MapServiceInterface {
 			throw new BadRequestException("There is another map with the same filename.");
 		}
 
-		BeanUtils.copyProperties(newMap, oldMap, "id", "owner", "fileId");
+		BeanUtils.copyProperties(newMap, oldMap, "id", "owner", "fileId", "thumbnail");
 		mapRepo.save(oldMap);
 		return oldMap;
 	}
