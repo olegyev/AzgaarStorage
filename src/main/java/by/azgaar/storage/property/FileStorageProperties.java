@@ -12,5 +12,6 @@ public class FileStorageProperties {
 
 	private String s3Url;
     private String s3Bucket;
+    private String fmgUrl;
 
 }

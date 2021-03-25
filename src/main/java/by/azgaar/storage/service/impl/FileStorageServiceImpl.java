@@ -21,6 +21,9 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 @Service
 public class FileStorageServiceImpl implements FileStorageServiceInterface {
@@ -44,7 +47,21 @@ public class FileStorageServiceImpl implements FileStorageServiceInterface {
         } catch (SdkClientException e) {
             throw new FileStorageException("Cannot create AWS S3 bucket where the uploaded files will be stored");
         }
-
+        
+        List<CORSRule.AllowedMethods> bucketCorsRule1 = new ArrayList<CORSRule.AllowedMethods>();
+        bucketCorsRule1.add(CORSRule.AllowedMethods.GET);
+        CORSRule rule1 = new CORSRule()
+        		.withId("CORSRule1")
+        		.withAllowedHeaders(Arrays.asList("*"))
+        		.withAllowedMethods(bucketCorsRule1)
+        		.withAllowedOrigins(Arrays.asList(fileStorageProperties.getFmgUrl()));
+        
+        List<CORSRule> corsRules = new ArrayList<CORSRule>();
+        corsRules.add(rule1);
+        
+        BucketCrossOriginConfiguration configuration = new BucketCrossOriginConfiguration();
+        configuration.setRules(corsRules);
+        
         s3Client.setPublicAccessBlock(new SetPublicAccessBlockRequest()
                 .withBucketName(bucket)
                 .withPublicAccessBlockConfiguration(new PublicAccessBlockConfiguration()
@@ -52,6 +69,8 @@ public class FileStorageServiceImpl implements FileStorageServiceInterface {
                         .withIgnorePublicAcls(false)
                         .withBlockPublicPolicy(false)
                         .withRestrictPublicBuckets(false)));
+        
+        s3Client.setBucketCrossOriginConfiguration(bucket, configuration);
 
         this.mapService = mapService;
     }
