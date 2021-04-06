@@ -27,7 +27,10 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
             /* Swagger */
             "/swagger-resources/**",
             "/swagger-ui.html",
-            "/v2/api-docs"
+            "/v2/api-docs",
+            
+            /* Click counter */
+            "/count-click/**"
     };
 
     private final CrossDomainCsrfTokenRepo csrfTokenRepository;

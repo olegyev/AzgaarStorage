@@ -6,7 +6,9 @@ import by.azgaar.storage.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.stereotype.Repository;
 
+@Repository
 public interface MapRepo extends JpaRepository<Map, Long>, JpaSpecificationExecutor<Map> {
 
     Map findByOwnerAndFilename(User owner, String filename);
