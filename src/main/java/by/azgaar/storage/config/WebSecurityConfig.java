@@ -57,6 +57,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                         .logoutSuccessUrl("/").permitAll()
                 )
                 .csrf(c -> c
+                		.ignoringAntMatchers(AUTH_WHITELIST)
                         .csrfTokenRepository(csrfTokenRepository)
                 )
                 .cors()
