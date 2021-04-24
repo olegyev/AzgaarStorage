@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration>
+	<Properties>
+        <Property name="log_dir">./logs</Property>
+    </Properties>
+
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout
+                pattern="%style{%d{ISO8601}}{black} %highlight{%-5level }[%style{%t}{bright,blue}] %style{%C{1.}}{bright,yellow}: %msg%n%throwable" />
+        </Console>
+
+        <RollingFile name="RollingFile" filePattern="${log_dir}/fmg-%d{yyyy-MM-dd}-%i.log">
+            <PatternLayout>
+                <pattern>%d %p %c{10} [%t] %m%n</pattern>
+            </PatternLayout>
+            <Policies>
+                <!-- roll over daily and when the file reaches 10 MegaBytes -->
+                <SizeBasedTriggeringPolicy size="10 MB" />
+                <TimeBasedTriggeringPolicy />
+            </Policies>
+        </RollingFile>
+    </Appenders>
+
+    <Loggers>
+        <!-- LOG everything at INFO level -->
+        <Root level="info">
+            <AppenderRef ref="Console" />
+            <AppenderRef ref="RollingFile" />
+        </Root>
+
+        <!-- LOG "by.azgaar.storage*" at TRACE level -->
+        <Logger name="by.azgaar.storage" level="trace"></Logger>
+    </Loggers>
+</Configuration>
