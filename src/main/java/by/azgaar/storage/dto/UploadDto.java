@@ -1,14 +1,12 @@
 package by.azgaar.storage.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-
-import java.net.URI;
 
 @Data
-@RequiredArgsConstructor
+@AllArgsConstructor
 @EqualsAndHashCode(callSuper = false)
 public class UploadDto extends AbstractDto {
 
@@ -24,10 +22,8 @@ public class UploadDto extends AbstractDto {
     @NonNull
     private String fileType;
 
-    @NonNull
     private long size;
 
-    @NonNull
     private int freeSlots;
 
 }

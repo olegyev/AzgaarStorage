@@ -19,7 +19,10 @@ import by.azgaar.storage.repo.MapRepo;
 import by.azgaar.storage.repo.specs.MapJpaSpecification;
 import by.azgaar.storage.service.MapServiceInterface;
 
+import lombok.extern.slf4j.Slf4j;
+
 @Service
+@Slf4j
 public class MapServiceImpl implements MapServiceInterface {
 
 	private final MapRepo mapRepo;
@@ -33,6 +36,7 @@ public class MapServiceImpl implements MapServiceInterface {
 	@Transactional
 	public Map create(Map map) {
 		if (!dbBodyIsOk(map)) {
+			log.error("Bad map to create: map=[{}].", map);
 			throw new BadRequestException("Map data does not contain all required fields");
 		}
 		return mapRepo.save(map);
@@ -59,8 +63,10 @@ public class MapServiceImpl implements MapServiceInterface {
 		Map map = getOneById(id);
 
 		if (map == null) {
+			log.error("Not found map for user=[{}] by ID=[{}].", owner.getId(), id);
 			throw new NotFoundException("Map is not found");
 		} else if (!map.getOwner().equals(owner)) {
+			log.error("User=[{}] tried to access map he is not owning by ID=[{}].", owner.getId(), id);
 			throw new AccessDeniedException("Access denied!");
 		}
 
@@ -92,10 +98,12 @@ public class MapServiceImpl implements MapServiceInterface {
 		newMap.setUpdated(oldMap.getUpdated());
 		
 		if (!dbBodyIsOk(oldMap) || !dbBodyIsOk(newMap)) {
+			log.error("DB map's renaming failed due to incorrect data: user=[{}], old map=[{}], new map=[{}].", owner.getId(), oldMap, newMap);
 			throw new BadRequestException("Map data does not contain all required fields.");
 		}
 		
 		if (sameFilenameIsInDb(owner, newMap.getFilename(), oldMap.getId())) {
+			log.error("DB map's renaming failed due to same filename in DB: user=[{}], old map=[{}], new map=[{}].", owner.getId(), oldMap, newMap);
 			throw new BadRequestException("There is another map with the same filename.");
 		}
 

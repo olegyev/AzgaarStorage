@@ -14,7 +14,10 @@ import by.azgaar.storage.repo.UserRepo;
 import by.azgaar.storage.service.UserServiceInterface;
 import by.azgaar.storage.util.RandomAlphaNumeric;
 
+import lombok.extern.slf4j.Slf4j;
+
 @Service
+@Slf4j
 public class UserServiceImpl implements UserServiceInterface {
 
 	private final UserRepo userRepo;
@@ -59,6 +62,7 @@ public class UserServiceImpl implements UserServiceInterface {
 			}
 
 			if (maxNumberOfTries == 0) {
+				log.error("Random S3 key generation failed! Retrying...");
 				throw new RandomStringException("Could not generate random S3 key. Try again!");
 			}
 

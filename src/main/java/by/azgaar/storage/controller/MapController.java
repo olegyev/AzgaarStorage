@@ -30,8 +30,11 @@ import by.azgaar.storage.service.FileStorageServiceInterface;
 import by.azgaar.storage.service.MapServiceInterface;
 import by.azgaar.storage.service.UserServiceInterface;
 
+import lombok.extern.slf4j.Slf4j;
+
 @RestController
 @RequestMapping("/maps")
+@Slf4j
 public class MapController {
 
 	private final UserServiceInterface userService;
@@ -41,8 +44,10 @@ public class MapController {
 	private final PagedResourcesAssembler<Map> pagedResourcesAssembler;
 
 	@Autowired
-	public MapController(final UserServiceInterface userService, final MapServiceInterface mapService,
-			final FileStorageServiceInterface fileStorageService, final DtoAssemblerInterface<Map, MapDto> assembler) {
+	public MapController(final UserServiceInterface userService,
+						 final MapServiceInterface mapService,
+						 final FileStorageServiceInterface fileStorageService,
+						 final DtoAssemblerInterface<Map, MapDto> assembler) {
 		this.userService = userService;
 		this.mapService = mapService;
 		this.fileStorageService = fileStorageService;
@@ -55,8 +60,8 @@ public class MapController {
 
 	@GetMapping
 	public ResponseEntity<PagedModel<MapDto>> getAll(@AuthenticationPrincipal OAuth2User principal,
-			@RequestParam(required = false) String filename,
-			@PageableDefault(sort = { "updated" }, direction = Sort.Direction.DESC) Pageable defaultPageable) {
+													 @RequestParam(required = false) String filename,
+													 @PageableDefault(sort = { "updated" }, direction = Sort.Direction.DESC) Pageable defaultPageable) {
 		User owner = userService.retrieveUser(principal);
 		Page<Map> maps = mapService.getAllByOwner(owner, filename, defaultPageable);
 		PagedModel<MapDto> dto = pagedResourcesAssembler.toModel(maps, assembler);
@@ -64,7 +69,8 @@ public class MapController {
 	}
 
 	@GetMapping("{id}")
-	public ResponseEntity<MapDto> getOne(@AuthenticationPrincipal OAuth2User principal, @PathVariable long id) {
+	public ResponseEntity<MapDto> getOne(@AuthenticationPrincipal OAuth2User principal,
+										 @PathVariable long id) {
 		User owner = userService.retrieveUser(principal);
 		Map map = mapService.getOneByOwner(owner, id);
 		MapDto dto = assembler.toModel(map);
@@ -81,15 +87,18 @@ public class MapController {
 		final String oldMapFilename = oldMap.getFilename();
 		Map renamedMap = mapService.rename(owner, oldMap, newMap);
 		fileStorageService.updateS3Map(owner.getS3Key() + "/" + oldMapFilename, owner.getS3Key() + "/" + renamedMap.getFilename());
+		log.info("Map renamed successfully: user=[{}], old map=[], new map=[{}].", owner.getId(), oldMap, renamedMap);
 		MapDto dto = assembler.toModel(renamedMap);
 		return new ResponseEntity<>(dto, HttpStatus.CREATED);
 	}
 
 	@DeleteMapping("{id}")
-	public ResponseEntity<HttpStatus> delete(@AuthenticationPrincipal OAuth2User principal, @PathVariable long id) {
+	public ResponseEntity<HttpStatus> delete(@AuthenticationPrincipal OAuth2User principal,
+											 @PathVariable long id) {
 		User owner = userService.retrieveUser(principal);
 		String mapToDeleteFilename = mapService.delete(owner, id);
 		fileStorageService.deleteS3Map(owner.getS3Key() + "/" + mapToDeleteFilename);
+		log.info("Map deleted successfully: user=[{}], map's DB ID=[], map's filename=[{}].", owner.getId(), id, mapToDeleteFilename);
 		return new ResponseEntity<>(HttpStatus.OK);
 	}
 
